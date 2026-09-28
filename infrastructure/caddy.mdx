@@ -1,0 +1,253 @@
+Use this page to operate and maintain Trappserver's Caddy reverse proxy. It records the configuration in `/home/trappserver/Documents/caddy_v2`, checked on **2026-09-28**.
+
+## How traffic reaches an application
+
+A client resolves an application hostname, connects to Caddy on port 443, and Caddy chooses an upstream from the request's hostname. Caddy handles the browser-facing TLS connection. Routes marked `internal-only` accept connections from `192.168.1.0/24`.
+
+| Component | Current setup |
+| --- | --- |
+| Caddy host | `192.168.1.236` |
+| LAN | `192.168.1.0/24` |
+| UniFi gateway and LAN DNS | `192.168.1.1` |
+| Compose project | `caddy-v2` |
+| Running container | `caddy-v2-caddy-1` |
+| Image | `custom-caddy:0.0.1` |
+| Caddy version | `2.11.4` |
+| Networking | Docker host networking |
+| HTTP / HTTPS ports | `80` / `443` |
+
+Host networking lets Caddy reach services on the server through `127.0.0.1`. Home Assistant and UniFi use separate LAN addresses.
+
+"Public" below means the route has no Caddy LAN guard. Internet reachability also depends on DNS, router rules, and the application's own authentication.
+
+## Files and deployment
+
+The running container belongs to the Komodo-managed stack at `/etc/komodo/stacks/caddy-v2`. Its configuration and storage are mounted from `/home/trappserver/Documents/caddy_v2`.
+
+| Local file or directory | Purpose |
+| --- | --- |
+| `Caddyfile` | Domain blocks, TLS settings, access guard, and service routes |
+| `Dockerfile` | Builds Caddy with `github.com/caddy-dns/cloudflare` using the Caddy 2.11.4 builder and runtime images |
+| `compose.yaml` | Local deployment definition; uses the custom image and host networking |
+| `data/` → `/data` | Persistent Caddy data, including production certificates |
+| `config/` → `/config` | Persistent Caddy configuration storage |
+| `certs/` → `/etc/caddy/certs` | Read-only certificate mount; the current Caddyfile does not reference these files |
+| `/var/www` → `/srv` | Static website content |
+| `sync_unifi_dns.py` | Adds missing LAN DNS records for protected proxy routes |
+| `unifi-caddy-dns-sync.service`, `unifi-caddy-dns-sync.timer` | User systemd automation |
+| `DNS-sync.md`, `DNS-migration.md` | Original local DNS notes |
+
+The Caddyfile mount is read-only inside the container. Edit it on the host.
+
+The local Compose definition uses `pull_policy: never` and `restart: unless-stopped`. The image must exist locally. To build it when needed:
+
+```sh
+cd /home/trappserver/Documents/caddy_v2
+docker build -t custom-caddy:0.0.1 .
+```
+
+For stack recreation, use the existing Komodo deployment and its environment settings. The Compose file expects `CF_API_TOKEN` from its deployment environment; no token value is stored in that file. A bare Compose command in this workspace can select a different project name and warn that the token is missing.
+
+## Certificates
+
+Both `ryantr.app` and `ryantrapp.com`, plus their wildcard names, import the shared `tls_cloudflare` snippet:
+
+```caddyfile
+(tls_cloudflare) {
+    tls {
+        dns cloudflare {env.CF_API_TOKEN}
+        resolvers 9.9.9.9:9953 149.112.112.112:9953
+        propagation_delay 10s
+    }
+}
+```
+
+Caddy uses the Cloudflare DNS challenge for certificate issuance and renewal. Keep the token in the deployment's credential settings.
+
+The alternate Quad9 port `9953` avoids UniFi's normal port-53 interception for ad blocking. The migration notes record successful isolated Let's Encrypt staging checks for all four apex/wildcard certificates. That is a historical check, not a guarantee of the next renewal.
+
+Keep `data/` when rebuilding or moving the stack so Caddy retains its certificate storage.
+
+## Hostname routes
+
+### Public application routes
+
+All names in this table end in `.ryantr.app`.
+
+| Hostname | Upstream |
+| --- | --- |
+| `ha` | `192.168.1.254:8123` |
+| `ombi` | `127.0.0.1:3579` |
+| `rankings` | `127.0.0.1:3030` |
+| `ninja` | `127.0.0.1:9004` |
+| `recipes` | `127.0.0.1:8686` |
+| `paperless` | `127.0.0.1:8010` |
+| `immich` | `127.0.0.1:2283` |
+
+### LAN-only application routes
+
+These names also end in `.ryantr.app` and import this guard:
+
+```caddyfile
+(internal-only) {
+    @external not remote_ip 192.168.1.0/24
+    abort @external
+}
+```
+
+The guard checks the directly connected peer's address. It aborts connections outside the allowed subnet. If you introduce another proxy in front of Caddy, review this rule against the addresses Caddy will actually see. See Caddy's [remote_ip matcher documentation](https://caddyserver.com/docs/caddyfile/matchers#remote-ip).
+
+| Hostname | Upstream |
+| --- | --- |
+| `watcharr` | `127.0.0.1:3080` |
+| `radarr` | `127.0.0.1:7878` |
+| `sab` | `127.0.0.1:8282` |
+| `sonarr` | `127.0.0.1:8112` |
+| `homebridge` | `127.0.0.1:8581` |
+| `komodo` | `127.0.0.1:9120` |
+| `portainer` | `127.0.0.1:9000` |
+| `port` | `127.0.0.1:9443`, with upstream TLS and certificate verification disabled |
+| `scrutiny` | `127.0.0.1:8081` |
+| `maintainerr` | `127.0.0.1:6246` |
+| `unifi` | `192.168.1.1`, with no explicit upstream TLS transport |
+
+The `port` route's `tls_insecure_skip_verify` setting applies to Caddy's connection to its upstream. Browser-facing TLS still uses Caddy's domain certificate. See the [reverse proxy transport reference](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#the-http-transport).
+
+### Static sites and fallback behavior
+
+The apex and `www` hostnames for both domains serve `/srv`, backed by `/var/www`. The `try_files {path} /index.html` rule falls back to `index.html` when the requested file is absent.
+
+Unmatched hostnames inside either domain block return `404 Not found`.
+
+The separate HTTP route for `trappserver.duckdns.org` redirects to `https://192.168.1.253:443{uri}`. This is a distinct configured destination from the Caddy host at `192.168.1.236`.
+
+## LAN DNS and automatic additions
+
+The DNS migration notes identify UniFi at `192.168.1.1` as the gateway and DHCP DNS server. Local A records point to Caddy at `192.168.1.236`.
+
+The recorded local names include all eleven protected routes plus `ha.ryantr.app`. Home Assistant's local record exists even though its Caddy route is public; the automation only discovers protected routes.
+
+The sync script:
+
+- Reads the mounted Caddyfile through `caddy-v2-caddy-1` and adapts and validates it with Caddy.
+- Recognizes the expanded `internal-only` guard for `192.168.1.0/24`.
+- Accepts explicit hostnames under `ryantr.app` and `ryantrapp.com`; rejects wildcard names.
+- Adds missing UniFi A records at `192.168.1.236` with a 300-second TTL.
+- Stops for conflicting, disabled, duplicate, CNAME, or differently addressed records.
+- Leaves existing records unchanged and never deletes them.
+- Does not reload Caddy or manage public Cloudflare records.
+
+Run it manually:
+
+```sh
+cd /home/trappserver/Documents/caddy_v2
+python3 sync_unifi_dns.py --dry-run
+python3 sync_unifi_dns.py --apply
+```
+
+Dry-run is the default. Only `--apply` creates DNS records.
+
+The script needs Python 3.11 or newer and Docker access. It reads local UniFi credentials and controller settings from the `unifi-network` MCP section of `~/.codex/config.toml`; `UNIFI_NETWORK_*` environment variables override those settings. The current documented LAN controller configuration disables controller certificate verification. Credential values belong in their existing credential store.
+
+### Scheduled sync
+
+The user timer was confirmed enabled and scheduled on 2026-09-28. It starts approximately two minutes after boot and runs every five minutes, with up to fifteen seconds of randomized delay.
+
+```sh
+systemctl --user list-timers unifi-caddy-dns-sync.timer
+journalctl --user -u unifi-caddy-dns-sync.service
+loginctl show-user trappserver -p Linger
+```
+
+The local setup notes record `Linger=yes`, allowing user services to run after logout. To reinstall the included units:
+
+```sh
+cd /home/trappserver/Documents/caddy_v2
+mkdir -p ~/.config/systemd/user
+cp unifi-caddy-dns-sync.service unifi-caddy-dns-sync.timer ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now unifi-caddy-dns-sync.timer
+```
+
+If lingering is disabled, enable it with `sudo loginctl enable-linger trappserver`.
+
+Existing DNS records remain on UniFi when this server or timer is offline. To stop automatic additions:
+
+```sh
+systemctl --user disable --now unifi-caddy-dns-sync.timer
+```
+
+## Add or change an application
+
+1. Add a host matcher and handler inside the appropriate existing domain block.
+2. For a LAN-only application, import `internal-only` before `reverse_proxy`.
+3. Validate and reload the Caddyfile.
+4. For an internal route, run the DNS dry-run and apply, or wait for the timer.
+5. Check DNS resolution and the application over HTTPS.
+
+Example internal route:
+
+```caddyfile
+@newapp host newapp.ryantr.app
+handle @newapp {
+    import internal-only
+    reverse_proxy 127.0.0.1:1234
+}
+```
+
+Use the application's actual port. For a public application, manage its public DNS separately.
+
+If you remove a hostname or change an internal route to public, review and remove stale UniFi records manually. The sync will not clean them up.
+
+## Validate, reload, and troubleshoot
+
+After editing the mounted Caddyfile, validate it before reloading:
+
+```sh
+docker exec caddy-v2-caddy-1 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+docker exec caddy-v2-caddy-1 caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+```
+
+Validation checks configuration loading and provisioning. Reload applies the file to the running process. See the [Caddy command reference](https://caddyserver.com/docs/command-line).
+
+Check the running container, version, and custom module:
+
+```sh
+docker ps --filter name=caddy-v2-caddy-1
+docker exec caddy-v2-caddy-1 caddy version
+docker exec caddy-v2-caddy-1 caddy list-modules --skip-standard
+docker logs --tail 100 caddy-v2-caddy-1
+```
+
+The module list should include `dns.providers.cloudflare`.
+
+From a LAN client with `dig` and `curl` installed:
+
+```sh
+dig @192.168.1.1 radarr.ryantr.app A +short
+curl -I https://radarr.ryantr.app
+curl -I --resolve radarr.ryantr.app:443:192.168.1.236 https://radarr.ryantr.app
+```
+
+The DNS result should be `192.168.1.236`. The `--resolve` check bypasses DNS while retaining the correct HTTPS hostname. An application login redirect can be a successful proxy response.
+
+| Symptom | Check |
+| --- | --- |
+| Internal name resolves incorrectly | UniFi record, client DNS server, DHCP lease, and sync dry-run |
+| Internal connection is aborted | Whether Caddy sees a peer address inside `192.168.1.0/24` |
+| Proxy returns a gateway error | Upstream service, address, port, and transport |
+| Certificate issuance or renewal fails | Cloudflare token configuration, DNS module, alternate resolver reachability, and Caddy logs |
+| Hostname returns Caddy's fallback 404 | Host matcher and whether the edited file was reloaded |
+| Sync reports a conflict | Existing UniFi record; resolve it manually before retrying |
+
+## Blocky migration context
+
+The 2026-09-28 migration notes record UniFi providing LAN DNS and ad blocking, both WAN connections using automatic upstream DNS, and no Blocky dependency for Caddy certificate checks.
+
+Blocky was retained temporarily for clients with old DHCP leases or manually configured DNS at `192.168.1.236`. Its compatibility upstream forwards to `192.168.1.1`. DHCP leases were recorded as 24 hours.
+
+Renew leases or reconnect clients to obtain the gateway DNS address. Change manually configured clients separately. The notes say to stop Blocky only after those clients migrate; its current runtime state has not been checked for this page.
+
+## Keep this reference current
+
+Update this page when you change a hostname, upstream port, LAN subnet, Caddy image, mount, or DNS workflow. The configuration files remain the source of truth. Runtime checks for this page confirmed the Caddy version, Cloudflare module, host networking, mounts, and scheduled timer; they did not retest every application or public router rule.
