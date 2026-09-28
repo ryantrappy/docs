@@ -1,0 +1,83 @@
+---
+title: "Service operations"
+description: "Inspect services, plan updates, troubleshoot routing, and identify recovery data."
+icon: "screwdriver-wrench"
+---
+
+Use this workflow to inspect, change, and recover services on Trappserver. Start with the [inventory](/services/overview) to identify the owning deployment and persistent data.
+
+## Inspect before changing
+
+```sh
+docker ps
+docker ps -a
+docker stats --no-stream
+docker logs --tail 100 paperless-webserver-1
+docker inspect paperless-webserver-1 --format '{{json .State.Status}}'
+docker inspect paperless-webserver-1 --format '{{json .Mounts}}'
+```
+
+Replace the example container with the service you are investigating. Read logs locally; redact credentials or personal data before copying them into documentation.
+
+Check the app's supporting database or broker too. Container health alone does not validate DNS, Caddy routing, or login.
+
+## Find the owning deployment
+
+Komodo's confirmed managed stacks are listed in the [inventory](/services/overview#confirmed-komodo-stacks). Update their source in Komodo, or the linked repository for the rankings stack.
+
+Portainer-era projects retain `/data/compose/...` labels. Use their existing definition and manager. For containers without labels, locate the saved deployment definition before attempting to recreate them.
+
+Preserve project names, mounts, port mappings, networks, and environment settings. Generated Compose files are useful evidence but may be overwritten by the manager.
+
+## Update a service
+
+1. Record the current image and app release, deployment source, and data paths.
+2. Confirm the backup includes both application files and database state where required.
+3. Read the upstream release notes for the installed version and target version.
+4. Apply the update through the existing manager.
+5. Check the updated container, its dependencies, logs, and browser response.
+6. Record the result in the service page.
+
+Many services use moving tags such as `latest`, `release`, or `:2`. Those tags do not identify the exact release currently running. Local images such as Caddy and rankings need their existing build workflow.
+
+Watchtower is running, but this inventory did not establish which containers it updates. Coordinate its settings with manual updates.
+
+## Separate DNS, proxy, and application failures
+
+From the LAN:
+
+```sh
+dig @192.168.1.1 radarr.ryantr.app A +short
+curl -I https://radarr.ryantr.app
+curl -I --resolve radarr.ryantr.app:443:192.168.1.236 https://radarr.ryantr.app
+```
+
+Radarr has a local record in the migration notes. The normal and `--resolve` checks compare DNS routing with direct access to Caddy.
+
+If the direct Caddy check fails, review [Caddy setup](/infrastructure/caddy), the upstream container, and its host port. If the direct check succeeds but the normal hostname fails, investigate DNS or the client's route.
+
+A Caddy LAN guard only governs traffic that passes through Caddy. Direct host ports have their own reachability controls.
+
+## Backup and recovery planning
+
+The mounts in each service reference identify storage that exists. They do not establish a working backup policy.
+
+| Service area | Recovery data to identify |
+| --- | --- |
+| Komodo | MongoDB volumes, keys, Core configuration, deployment definitions, and backups |
+| Caddy | Caddyfile, custom build definition, certificate data, and deployment credentials |
+| Immich | Database backup, uploads, external-library files, and matching mount paths |
+| Paperless | Documents, app data, database/export, and AI companion state |
+| Media | App configuration and selected media/download files |
+| Rankings | MongoDB data, source revision, local build, and required application state |
+| Tandoor | Recipe media and the still-unverified database location |
+| TeslaMate | PostgreSQL data, dashboards, MQTT configuration, and logger deployment |
+| Other tools | The bind mounts and named volumes listed in their reference pages |
+
+Use application-supported database backups or a coordinated shutdown/snapshot strategy. A raw copy of an active database directory is not a verified recovery procedure. Follow the app's documentation for its installed release.
+
+Retain volume names and host paths when restoring. Removing a container does not automatically restore its deployment configuration or data.
+
+## Documentation after a change
+
+Record the new access path, image/release, deployment source, ports, data locations, dependencies, and verification date. Explain any remaining unknowns beside the affected service so the next maintenance task starts with useful evidence.

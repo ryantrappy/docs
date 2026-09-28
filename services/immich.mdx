@@ -1,0 +1,123 @@
+---
+title: "Immich photo library"
+description: "Running containers, access, storage, and maintenance for immich photo library."
+icon: "images"
+---
+
+Immich's four-container Komodo stack provides the photo and video service. All four containers reported healthy in the **2026-09-28** snapshot.
+
+## Access and deployment
+
+[Immich](https://immich.ryantr.app) is a public Caddy route to host port 2283. The machine learning, PostgreSQL, and Valkey services have no host-published ports.
+
+Komodo's Compose file is `/etc/komodo/stacks/immich/compose.yaml`. All services share `immich_default` and use restart policy `always`.
+
+The app and worker use the `release` tag. The database is PostgreSQL 14 with VectorChord and pgvectors extensions. Identify the installed app release before following a version-specific upgrade or restore procedure.
+
+## Library and database
+
+The upload mount points to `/etc/komodo/stacks/immich/library`; PostgreSQL data lives at `/etc/komodo/stacks/immich/postgres`.
+
+Three existing directories under `/media/internal/fourteenTB/full_raid_backup` are mounted read-only: `Photos`, `dadExternal`, and `Photos from dads external`. A mount does not prove that the directory is configured as an external library inside Immich.
+
+The worker uses the `immich_model-cache` volume. Server and Valkey anonymous volumes appear in the reference below.
+
+## Backups and maintenance
+
+Recovery needs the database and photo/video files together. Database dumps do not contain media. Preserve external-library files and their mount layout too. Use the [official backup and restore guide](https://docs.immich.app/administration/backup-and-restore/) for your installed version.
+
+This inspection verified paths and Docker health; it did not verify backup scheduling or restore readiness.
+
+```sh
+docker logs --tail 100 immich_server
+docker logs --tail 100 immich_machine_learning
+docker logs --tail 100 immich_postgres
+```
+
+Use [Service operations](/operations/services) for maintenance.
+
+## Container reference
+
+All listed containers were running. Docker health is a snapshot, not an application login or end-to-end availability test. Published ports were bound on all host interfaces; network controls determine reachability. Image references below show tags with digest suffixes omitted for readability.
+
+### immich_server
+
+Immich photo and video application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/immich-app/immich-server:release` |
+| Compose project / service | `immich` / `immich-server` |
+| Network | `immich_default` |
+| Host → container ports | `2283 → 2283/tcp` |
+| Restart policy | `always` |
+| Docker health | Healthy at inventory time |
+| Caddy route | [immich.ryantr.app](https://immich.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/etc/komodo/stacks/immich/library` | `/usr/src/app/upload` | Read/write |
+| `/etc/localtime` | `/etc/localtime` | Read-only |
+| `/media/internal/fourteenTB/full_raid_backup/Photos` | `/media/internal/fourteenTB/full_raid_backup/Photos` | Read-only |
+| `/media/internal/fourteenTB/full_raid_backup/dadExternal` | `/media/internal/fourteenTB/full_raid_backup/dadExternal` | Read-only |
+| `/media/internal/fourteenTB/full_raid_backup/Photos from dads external` | `/media/internal/fourteenTB/full_raid_backup/Photos from dads external` | Read-only |
+| Anonymous Docker volume | `/data` | Read/write |
+
+### immich_machine_learning
+
+Immich machine learning worker.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/immich-app/immich-machine-learning:release` |
+| Compose project / service | `immich` / `immich-machine-learning` |
+| Network | `immich_default` |
+| Host → container ports | None |
+| Restart policy | `always` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Named volume `immich_model-cache` | `/cache` | Read/write |
+
+### immich_postgres
+
+Immich PostgreSQL database with vector extensions.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0` |
+| Compose project / service | `immich` / `database` |
+| Network | `immich_default` |
+| Host → container ports | None |
+| Restart policy | `always` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/etc/komodo/stacks/immich/postgres` | `/var/lib/postgresql/data` | Read/write |
+
+### immich_redis
+
+Valkey service for Immich.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `docker.io/valkey/valkey:8-bookworm` |
+| Compose project / service | `immich` / `redis` |
+| Network | `immich_default` |
+| Host → container ports | None |
+| Restart policy | `always` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Anonymous Docker volume | `/data` | Read/write |

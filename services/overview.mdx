@@ -1,0 +1,125 @@
+---
+title: "Service inventory"
+description: "All running containers, Komodo stacks, access paths, and follow-up checks for Trappserver."
+icon: "layer-group"
+---
+
+The Docker host at `192.168.1.236` had **44 running containers** in the **2026-09-28** inspection. Fourteen reported healthy; thirty had no Docker healthcheck. None reported unhealthy at that moment.
+
+Komodo's read-only API identifies one server, **Local**, and nine running managed stacks containing twenty of those containers. The other twenty-four belong to the management plane, older Compose projects, or standalone deployments.
+
+## Browse by purpose
+
+| Area | Containers | Reference |
+| --- | --- | --- |
+| Management and monitoring | 10 | [Open reference](/services/platform) |
+| Networking and DNS | 7 | [Open reference](/services/networking) |
+| Media and downloads | 12 | [Open reference](/services/media) |
+| Paperless and document management | 4 | [Open reference](/services/paperless) |
+| Immich photo library | 4 | [Open reference](/services/immich) |
+| Personal apps and home automation | 7 | [Open reference](/services/personal) |
+
+Each reference lists container names, image tags, networks, actual port mappings, restart policy, and persistent mounts. The [Caddy page](/infrastructure/caddy) explains route protection and DNS.
+
+## Confirmed Komodo stacks
+
+| Stack | Running containers | Deployment location |
+| --- | --- | --- |
+| `arr_stack` | 6 | `/etc/komodo/stacks/arr_stack/compose.yaml` |
+| `caddy-v2` | 1 | `/etc/komodo/stacks/caddy-v2/compose.yaml` |
+| `cloudflare-ddns` | 1 | `/etc/komodo/stacks/cloudflare-ddns/compose.yaml` |
+| `cloudflared` | 1 | `/etc/komodo/stacks/cloudflared/compose.yaml` |
+| `fantasy-rankings` | 2 | `/etc/komodo/repos/fantasy_rankings/docker-compose.yml` |
+| `immich` | 4 | `/etc/komodo/stacks/immich/compose.yaml` |
+| `komodo-mcp` | 1 | `/etc/komodo/stacks/komodo-mcp/compose.yaml` |
+| `paperless` | 3 | `/etc/komodo/stacks/paperless/compose.yaml` |
+| `watcharr` | 1 | `/etc/komodo/stacks/watcharr/compose.yaml` |
+
+Komodo reports no standalone Deployment resources. This does not mean there are no standalone Docker containers: several are present below without Compose labels.
+
+The older `caddy` and `dokuwiki` Komodo stacks are stopped. The active proxy is `caddy-v2`.
+
+## All running containers
+
+"Caddy route" describes the configured access path, not an availability test. A host-published port is bound on all host interfaces in this snapshot; LAN guards in Caddy do not apply to direct connections to those ports.
+
+| Container | Project | Configured Caddy access | Reference |
+| --- | --- | --- | --- |
+| `metube` | No Compose labels | No route found | [Media and downloads](/services/media) |
+| `caddy-v2-caddy-1` | `caddy-v2` | [Caddy setup](/infrastructure/caddy) | [Networking and DNS](/services/networking) |
+| `arr_stack-ombi-1` | `arr_stack` | [ombi.ryantr.app](https://ombi.ryantr.app) | [Media and downloads](/services/media) |
+| `fantasy-rankings-rankings_studio-1` | `fantasy-rankings` | [rankings.ryantr.app](https://rankings.ryantr.app) | [Personal apps and home automation](/services/personal) |
+| `komodo-mcp-komodo-mcp-server-1` | `komodo-mcp` | No route found | [Management and monitoring](/services/platform) |
+| `cloudflared` | `cloudflared` | No route found | [Networking and DNS](/services/networking) |
+| `fantasy-rankings-mongo-1` | `fantasy-rankings` | No route found | [Personal apps and home automation](/services/personal) |
+| `tautulli` | `arr_stack` | No route found | [Media and downloads](/services/media) |
+| `paperless-webserver-1` | `paperless` | [paperless.ryantr.app](https://paperless.ryantr.app) | [Paperless and document management](/services/paperless) |
+| `paperless-db-1` | `paperless` | No route found | [Paperless and document management](/services/paperless) |
+| `paperless-broker-1` | `paperless` | No route found | [Paperless and document management](/services/paperless) |
+| `arr_stack-sabnzbd-1` | `arr_stack` | [sab.ryantr.app](https://sab.ryantr.app) | [Media and downloads](/services/media) |
+| `arr_stack-radarr-1` | `arr_stack` | [radarr.ryantr.app](https://radarr.ryantr.app) | [Media and downloads](/services/media) |
+| `arr_stack-overseerr-1` | `arr_stack` | No route found | [Media and downloads](/services/media) |
+| `arr_stack-sonarr-1` | `arr_stack` | [sonarr.ryantr.app](https://sonarr.ryantr.app) | [Media and downloads](/services/media) |
+| `cloudflare-ddns-cloudflare-ddns-1` | `cloudflare-ddns` | No route found | [Networking and DNS](/services/networking) |
+| `immich_machine_learning` | `immich` | No route found | [Immich photo library](/services/immich) |
+| `immich_server` | `immich` | [immich.ryantr.app](https://immich.ryantr.app) | [Immich photo library](/services/immich) |
+| `immich_redis` | `immich` | No route found | [Immich photo library](/services/immich) |
+| `immich_postgres` | `immich` | No route found | [Immich photo library](/services/immich) |
+| `qbittorrent` | `qbittorrent` | No route found | [Media and downloads](/services/media) |
+| `homebridge` | No Compose labels | [homebridge.ryantr.app](https://homebridge.ryantr.app) | [Personal apps and home automation](/services/personal) |
+| `homelable-backend-1` | `homelable` | No route found | [Management and monitoring](/services/platform) |
+| `homelable-frontend-1` | `homelable` | No route found | [Management and monitoring](/services/platform) |
+| `homelable-mcp-1` | `homelable` | No route found | [Management and monitoring](/services/platform) |
+| `watcharr` | `watcharr` | [watcharr.ryantr.app](https://watcharr.ryantr.app) | [Media and downloads](/services/media) |
+| `komodo-periphery-1` | `komodo` | No route found | [Management and monitoring](/services/platform) |
+| `komodo-core-1` | `komodo` | [komodo.ryantr.app](https://komodo.ryantr.app) | [Management and monitoring](/services/platform) |
+| `komodo-mongo-1` | `komodo` | No route found | [Management and monitoring](/services/platform) |
+| `duplicate_finder` | No Compose labels | No route found | [Media and downloads](/services/media) |
+| `network-optimizer` | `network-optimizer` | No route found | [Networking and DNS](/services/networking) |
+| `network-optimizer-speedtest` | `network-optimizer` | No route found | [Networking and DNS](/services/networking) |
+| `influxdb` | `network-optimizer` | No route found | [Networking and DNS](/services/networking) |
+| `teslamate_mosquitto_1` | `teslamate` | No route found | [Personal apps and home automation](/services/personal) |
+| `portainer` | No Compose labels | [port.ryantr.app](https://port.ryantr.app) | [Management and monitoring](/services/platform) |
+| `maintainerr` | No Compose labels | [maintainerr.ryantr.app](https://maintainerr.ryantr.app) | [Media and downloads](/services/media) |
+| `uptime_kuma-uptime-kuma-1` | `uptime_kuma` | No route found | [Management and monitoring](/services/platform) |
+| `tandoor_web_recipes_1` | `tandoor` | [recipes.ryantr.app](https://recipes.ryantr.app) | [Personal apps and home automation](/services/personal) |
+| `blocky` | No Compose labels | No route found | [Networking and DNS](/services/networking) |
+| `teslamate_grafana_1` | `teslamate` | No route found | [Personal apps and home automation](/services/personal) |
+| `youtube_blocker` | No Compose labels | No route found | [Media and downloads](/services/media) |
+| `teslamate_database_1` | `teslamate` | No route found | [Personal apps and home automation](/services/personal) |
+| `paperless-ai` | No Compose labels | No route found | [Paperless and document management](/services/paperless) |
+| `watchtower` | No Compose labels | No route found | [Management and monitoring](/services/platform) |
+
+## Other Compose project locations
+
+These locations come from runtime labels. Projects under `/data/compose` carry older Portainer-era paths and were not listed as managed stacks by Komodo's API.
+
+| Compose project | Recorded working directory |
+| --- | --- |
+| `homelable` | `/home/trappserver/Documents/homelable/homelable` |
+| `komodo` | `/home/trappserver/Documents/komodo/komodo` |
+| `network-optimizer` | `/data/compose/67` |
+| `qbittorrent` | `/data/compose/68` |
+| `tandoor` | `/data/compose/33` |
+| `teslamate` | `/data/compose/4` |
+| `uptime_kuma` | `/data/compose/52` |
+
+A container without Compose labels has an unknown original deployment source until it is checked in the relevant manager.
+
+## Items to verify
+
+- Ombi, Overseerr, and Sonarr have unusual published port mappings. See [Media and downloads](/services/media).
+- The rankings app has restart policy `no`. See [Personal apps](/services/personal).
+- TeslaMate support services are running without a logger container in the host inventory.
+- Tandoor's database location was not established.
+- Blocky is still running during the migration to gateway DNS.
+- Watchtower's update scope and schedule, and application backup coverage, were not verified.
+- Caddy also contains routes for `ninja`, `scrutiny`, Home Assistant, and UniFi that were not matched to running containers on this host. They may run elsewhere or outside Docker.
+
+## Inventory boundaries
+
+The inspection used Docker state, mounts, Compose labels, selected non-secret settings, the local Caddyfile, and Komodo's read-only API. Application roles are identified from their images and project documentation. App logins, external tunnel routes, monitor settings, database recovery, and end-to-end availability were not tested.
+
+Stopped containers included `caddy-caddy-1`, `server_wiki`, and an older `cloudflared` instance named `vibrant_shirley`. They are not counted in the forty-four running containers.
+
+Refresh this reference after deployment changes; the counts and states are a dated snapshot.

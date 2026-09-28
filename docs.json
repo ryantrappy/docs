@@ -1,17 +1,16 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Trappserver",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",
     "dark": "#15803D"
   },
-  "favicon": "/favicon.svg",
   "navigation": {
     "pages": [
       {
-        "group": "Getting Started",
+        "group": "Start here",
         "pages": [
           "index",
           "quickstart"
@@ -23,38 +22,40 @@
         "pages": [
           "infrastructure/caddy"
         ]
+      },
+      {
+        "group": "Services",
+        "icon": "layer-group",
+        "pages": [
+          "services/overview",
+          "services/platform",
+          "services/networking",
+          "services/media",
+          "services/paperless",
+          "services/immich",
+          "services/personal"
+        ]
+      },
+      {
+        "group": "Operations",
+        "icon": "screwdriver-wrench",
+        "pages": [
+          "operations/services"
+        ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    ]
   },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:support@mintlify.com"
+        "href": "/services/overview",
+        "label": "Service inventory"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "label": "Komodo",
+      "href": "https://komodo.ryantr.app"
     }
   },
   "contextual": {
@@ -69,11 +70,5 @@
       "vscode"
     ]
   },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
-  }
+  "description": "Operations and service documentation for the Trappserver homelab."
 }

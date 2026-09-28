@@ -1,0 +1,185 @@
+---
+title: "Personal apps and home automation"
+description: "Running containers, access, storage, and maintenance for personal apps and home automation."
+icon: "house"
+---
+
+This reference covers rankings, recipes, Homebridge, and the running TeslaMate support services, checked on **2026-09-28**.
+
+## Fantasy football rankings
+
+[Rankings](https://rankings.ryantr.app) is a public Caddy route to host port 3030. Komodo manages `fantasy-rankings` from the linked `fantasy_rankings` repository at `/etc/komodo/repos/fantasy_rankings/docker-compose.yml`.
+
+The API reports source repository `ryantrappy/Fantasy-football-rankings-studio` and deployed revision `8565438`. The app image is built locally as `fantasy-rankings-app:local`.
+
+MongoDB stores data at `/home/trappserver/Documents/fantasy_rankings`. The app mounts `fantasy-rankings_codex-home` at `/app/.codex`; its contents were not inspected.
+
+The app restart policy is **no**, while MongoDB uses `unless-stopped`. A reboot or process exit can leave the app stopped until it is started again. This inventory did not change that setting.
+
+## Tandoor recipes
+
+[Recipes](https://recipes.ryantr.app) is a public Caddy route to host port 8686, mapped to container port 8080. The older `tandoor` project labels point to `/data/compose/33`.
+
+Mounts preserve `/home/trappserver/Documents/tandoor/mediafiles` and `staticfiles`. No Tandoor database container appears in the running snapshot. Its database engine and location were not established; identify that storage before treating these directories as a complete recovery set.
+
+## Homebridge
+
+[Homebridge](https://homebridge.ryantr.app) is a LAN-only Caddy route to `127.0.0.1:8581`. Homebridge uses host networking and stores state at `/home/trappserver/Documents/homebridge`.
+
+No Compose labels are present. Plugins, pairings, and the UI listener were not inspected. Preserve its state when changing deployment.
+
+Home Assistant is configured in Caddy at `192.168.1.254:8123`, outside this host's Docker inventory.
+
+## TeslaMate support services
+
+The `teslamate` project has Grafana, PostgreSQL 13, and Mosquitto running. Grafana publishes 3000; database and MQTT ports are not host-published. Labels point to `/data/compose/4`.
+
+**No TeslaMate logger container appears in the running or stopped host snapshots.** These support services do not establish that vehicle data collection is active. Check whether the logger runs elsewhere before assuming the stack is complete.
+
+Preserve the named volumes for database, Grafana, and Mosquitto data/configuration. No TeslaMate Caddy route was found.
+
+Use [Service operations](/operations/services) for maintenance.
+
+## Container reference
+
+All listed containers were running. Docker health is a snapshot, not an application login or end-to-end availability test. Published ports were bound on all host interfaces; network controls determine reachability. Image references below show tags with digest suffixes omitted for readability.
+
+### fantasy-rankings-rankings_studio-1
+
+Locally built fantasy football rankings application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `fantasy-rankings-app:local` |
+| Compose project / service | `fantasy-rankings` / `rankings_studio` |
+| Network | `fantasy-internal` |
+| Host → container ports | `3030 → 3030/tcp` |
+| Restart policy | `no` |
+| Docker health | No healthcheck configured |
+| Caddy route | [rankings.ryantr.app](https://rankings.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Named volume `fantasy-rankings_codex-home` | `/app/.codex` | Read/write |
+
+### fantasy-rankings-mongo-1
+
+MongoDB database for fantasy rankings.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `mongo:8` |
+| Compose project / service | `fantasy-rankings` / `mongo` |
+| Network | `fantasy-internal` |
+| Host → container ports | None |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/fantasy_rankings` | `/data/db` | Read/write |
+| Anonymous Docker volume | `/data/configdb` | Read/write |
+
+### tandoor_web_recipes_1
+
+Recipe application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `vabene1111/recipes:latest` |
+| Compose project / service | `tandoor` / `web_recipes` |
+| Network | `tandoor_default` |
+| Host → container ports | `8686 → 8080/tcp` |
+| Restart policy | `always` |
+| Docker health | No healthcheck configured |
+| Caddy route | [recipes.ryantr.app](https://recipes.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/tandoor/mediafiles` | `/opt/recipes/mediafiles` | Read/write |
+| `/home/trappserver/Documents/tandoor/staticfiles` | `/opt/recipes/staticfiles` | Read/write |
+
+### homebridge
+
+Home automation bridge.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `homebridge/homebridge:latest` |
+| Compose project / service | No Compose labels |
+| Network | `host` |
+| Host → container ports | Host networking; listener not shown by mappings |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+| Caddy route | [homebridge.ryantr.app](https://homebridge.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/homebridge` | `/homebridge` | Read/write |
+
+### teslamate_grafana_1
+
+TeslaMate Grafana dashboards.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `teslamate/grafana:latest` |
+| Compose project / service | `teslamate` / `grafana` |
+| Network | `teslamate_default` |
+| Host → container ports | `3000 → 3000/tcp` |
+| Restart policy | `always` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Named volume `teslamate_teslamate-grafana-data` | `/var/lib/grafana` | Read/write |
+
+### teslamate_database_1
+
+PostgreSQL database in the TeslaMate project.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `postgres:13` |
+| Compose project / service | `teslamate` / `database` |
+| Network | `teslamate_default` |
+| Host → container ports | None |
+| Restart policy | `always` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Named volume `teslamate_teslamate-db` | `/var/lib/postgresql/data` | Read/write |
+
+### teslamate_mosquitto_1
+
+MQTT broker in the TeslaMate project.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `eclipse-mosquitto:2` |
+| Compose project / service | `teslamate` / `mosquitto` |
+| Network | `teslamate_default` |
+| Host → container ports | None |
+| Restart policy | `always` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Named volume `teslamate_mosquitto-data` | `/mosquitto/data` | Read/write |
+| Anonymous Docker volume | `/mosquitto/log` | Read/write |
+| Named volume `teslamate_mosquitto-conf` | `/mosquitto/config` | Read/write |

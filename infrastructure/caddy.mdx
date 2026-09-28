@@ -1,3 +1,9 @@
+---
+title: "Caddy setup"
+description: "Reverse proxy routes, certificates, LAN access, DNS automation, and maintenance."
+icon: "server"
+---
+
 Use this page to operate and maintain Trappserver's Caddy reverse proxy. It records the configuration in `/home/trappserver/Documents/caddy_v2`, checked on **2026-09-28**.
 
 ## How traffic reaches an application
@@ -246,7 +252,7 @@ The 2026-09-28 migration notes record UniFi providing LAN DNS and ad blocking, b
 
 Blocky was retained temporarily for clients with old DHCP leases or manually configured DNS at `192.168.1.236`. Its compatibility upstream forwards to `192.168.1.1`. DHCP leases were recorded as 24 hours.
 
-Renew leases or reconnect clients to obtain the gateway DNS address. Change manually configured clients separately. The notes say to stop Blocky only after those clients migrate; its current runtime state has not been checked for this page.
+Renew leases or reconnect clients to obtain the gateway DNS address. Change manually configured clients separately. The notes say to stop Blocky only after those clients migrate. The subsequent container inventory on 2026-09-28 confirmed Blocky was still running and healthy; see [Networking and DNS](/services/networking).
 
 ## Keep this reference current
 
