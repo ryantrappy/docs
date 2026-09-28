@@ -25,6 +25,18 @@ df -h
 
 Match the service to the [inventory](/services/overview). Docker's **running** state only confirms the process is up. **Healthy** means its configured healthcheck passes. Many services have no healthcheck.
 
+## Check services outside Docker
+
+[Plex](/services/plex) runs directly on Ubuntu. [Native host services](/services/host) covers the remaining host daemons, and [Homelab devices](/infrastructure/devices) locates Home Assistant and UniFi infrastructure.
+
+```sh
+systemctl status plexmediaserver.service --no-pager
+curl -I http://192.168.1.236:32400/web/
+systemctl status crashplan.service pwrstatd.service smartmontools.service --no-pager
+```
+
+Check [Backups, power, and storage](/infrastructure/host-reliability) for media mounts and backup verification. A running backup engine does not confirm that an application has a usable backup.
+
 ## Locate the deployment and data
 
 Read the service page before editing. It lists Compose project labels, published ports, restart policy, and mounts.

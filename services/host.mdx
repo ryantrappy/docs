@@ -1,0 +1,63 @@
+---
+title: "Native host services"
+description: "Applications and operational services running directly on Ubuntu."
+icon: "server"
+---
+
+Trappserver runs applications and operational services directly on **Ubuntu 24.04.5 LTS**, alongside Docker. This inventory was checked on **2026-09-28**. There were 47 running system service units and 46 running user units, mostly desktop components.
+
+## Native service inventory
+
+| Unit | Purpose | Observed state |
+| --- | --- | --- |
+| `plexmediaserver.service` | Media server | Running and enabled; account plex |
+| `crashplan.service` | Backup engine | Enabled; engine process present |
+| `ddclient.service` | Dynamic DNS | Running and enabled |
+| `pwrstatd.service` | CyberPower UPS management | Running and enabled |
+| `smartmontools.service` | Disk SMART monitoring | Running and enabled |
+| `fail2ban.service` | Authentication failure monitoring | Running and enabled |
+| `ssh.service` | Terminal access | Running; activated by enabled ssh.socket |
+| `gnome-remote-desktop.service` | Remote desktop | System and user units running |
+| `docker.service`, `containerd.service` | Container runtime | Running |
+| `cron.service` | Scheduled host jobs | Running and enabled |
+
+[Plex](/services/plex) has a dedicated reference. [Backups, power, and storage](/infrastructure/host-reliability) covers CrashPlan, UPS management, SMART, and disks.
+
+## Dynamic DNS
+
+The native ddclient executable is `/usr/bin/ddclient`, package version **3.10.0-2**. Its configuration is `/etc/ddclient.conf`, which was protected from the current user's reads. Provider and target hostnames were not established.
+
+This daemon is independent of the Docker cloudflare-ddns stack described in [Networking and DNS](/services/networking). Check whether their target records overlap before changing either updater.
+
+## Terminal access and authentication monitoring
+
+TCP 22 was listening on IPv4 and IPv6. The SSH service was running with a disabled unit-file state, while ssh.socket was active and enabled. Socket activation explains why SSH is available with the service itself disabled.
+
+The OpenSSH package is **1:9.6p1-3ubuntu13.19**. A local drop-in configures key-based authentication and disables password authentication. The full effective configuration and root-login policy were not checked.
+
+Fail2Ban **1.0.2-3ubuntu0.1** is running. The distro configuration enables the SSH jail. Local defaults specify a 10-minute ban interval, 10-minute observation interval, and five retries. Live jail and ban state were not queried.
+
+## Desktop services
+
+GNOME Remote Desktop **46.3-0ubuntu1.2** runs at system and current-user scope. Protocol, listener, and remote-login success were not verified.
+
+LightDM, GNOME session components, Avahi, Bluetooth, CUPS, and CUPS Browsed were also running. TCP 631 was listening. Printer configuration and sharing were not inspected.
+
+## Host maintenance
+
+NetworkManager, systemd-networkd, systemd-resolved, systemd-timesyncd, rsyslog, journald, and unattended-upgrades were running. System timers cover package updates, log rotation, filesystem checks, trimming, and package-database backups. These maintenance jobs do not establish application backup coverage.
+
+The five-minute Caddy-to-UniFi DNS sync uses a user timer; see [Caddy setup](/infrastructure/caddy). Root and other users' cron jobs were not enumerated.
+
+```sh
+systemctl list-units --type=service --state=running --no-pager
+systemctl --user list-units --type=service --state=running --no-pager
+systemctl list-timers --all --no-pager
+systemctl --user list-timers --all --no-pager
+```
+
+## Installed but inactive
+
+The snap Caddy service is disabled and inactive; the active proxy is Docker's caddy-v2 stack. LXD snap services were installed but inactive, with socket-based daemon activation. No LXD workloads were confirmed.
+
+This reference summarizes routine desktop daemons and focuses on durable homelab services. Readable configuration, process names, package versions, listeners, and unit state were inspected without changing services.

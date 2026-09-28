@@ -14,6 +14,8 @@ Komodo confirms `cloudflared` and `cloudflare-ddns` as running stacks. Both use 
 
 A running tunnel connector does not establish that every Caddy hostname also has a tunnel route.
 
+The host also runs native `ddclient`; its protected configuration was not inspected. See [Native host services](/services/host#dynamic-dns). The [Homelab devices](/infrastructure/devices) page records the UniFi gateway, switches, access points, and reported uplinks.
+
 ## Blocky migration
 
 Blocky is **still running** and reports healthy in this snapshot. It publishes DNS over TCP and UDP 53 and host port 4001 to container port 4000.

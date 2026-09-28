@@ -20,7 +20,9 @@
         "group": "Infrastructure",
         "icon": "server",
         "pages": [
-          "infrastructure/caddy"
+          "infrastructure/caddy",
+          "infrastructure/host-reliability",
+          "infrastructure/devices"
         ]
       },
       {
@@ -29,6 +31,7 @@
         "pages": [
           "services/overview",
           "services/plex",
+          "services/host",
           "services/platform",
           "services/networking",
           "services/media",

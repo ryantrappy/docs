@@ -4,4 +4,117 @@ description: "Native Plex service, library paths, data storage, and maintenance 
 icon: "film"
 ---
 
-Plex Media Server runs directly on the Trappserver host as `plexmediaserver.service`. This reference is being expanded from the verified 2026-09-28 inventory.
+Plex runs directly on the Trappserver Ubuntu host as a systemd service. It is separate from the Docker media stack. The service, web interface, and library database were checked on **2026-09-28**.
+
+## Access and deployment
+
+| Setting | Verified value |
+| --- | --- |
+| Host | `192.168.1.236` |
+| Web interface | [Plex Web](http://192.168.1.236:32400/web/) |
+| Systemd unit | `plexmediaserver.service` |
+| Startup | Enabled |
+| Service account | `plex:plex` |
+| Installed package | `plexmediaserver` |
+| Package and HTTP identity version | `1.43.4.10903-e5521bd8c` |
+| Unit file | `/usr/lib/systemd/system/plexmediaserver.service` |
+| Local checks | Web interface and `/identity` returned HTTP 200 |
+
+The identity endpoint reports the server as claimed. Account access, remote streaming, and playback were not tested.
+
+Port 32400 was listening on the host. No Plex route was found in the current Caddyfile. The LAN restrictions described on the [Caddy page](/infrastructure/caddy) apply to Caddy routes, not direct access to Plex's port.
+
+## Server data
+
+The observed server data directory is:
+
+```text
+/var/lib/plexmediaserver/Library/Application Support/Plex Media Server
+```
+
+| Item under the data directory | Purpose |
+| --- | --- |
+| `Preferences.xml` | Server settings; reading this file requires additional permission in the current shell |
+| `Plug-in Support/Databases/com.plexapp.plugins.library.db` | Library database queried read-only for this inventory |
+| `Plug-in Support/Databases/com.plexapp.plugins.library.blobs.db` | Companion database present on disk |
+| `Metadata/`, `Media/` | Server metadata and media-support state |
+| `Logs/` | Server logs |
+| `Cache/` | Server cache; the configured transcoding directory was not verified |
+
+Plex's server data directory is separate from the actual movie, television, and photo files. See the [Plex data-directory reference](https://support.plex.tv/articles/202915258-where-is-the-plex-media-server-data-directory-located/) for product context.
+
+## Library roots
+
+The database contains three library names with **22 configured root paths**. The paths below preserve capitalization exactly as stored.
+
+| Library | Configured path | Present during inspection |
+| --- | --- | --- |
+| Movies | `/media/internal/fourTb/movies` | Yes |
+| Movies | `/media/internal/fourTbRed/movies` | Yes |
+| Movies | `/media/internal/fourteenTB/full_raid_backup/Media/Movies` | Yes |
+| Movies | `/media/internal/fourteenTb/movies` | No |
+| Movies | `/media/internal/redThrees/walleye/movies` | Yes |
+| Movies | `/media/internal/sixTb/movies` | Yes |
+| Movies | `/media/internal/threeTB/movies` | Yes |
+| Movies | `/media/internal/twelveTb/movies` | Yes |
+| Movies | `/media/internal/twoTB/Movies` | Yes |
+| Photos | `/media/internal/fourteenTB/full_raid_backup/Photos` | Yes |
+| Photos | `/media/internal/fourteenTB/full_raid_backup/Photos from dads external` | Yes |
+| Photos | `/media/internal/fourteenTB/full_raid_backup/dadExternal` | Yes |
+| TV Shows | `/media/internal/fourTb/tvShows` | Yes |
+| TV Shows | `/media/internal/fourTbRed/tvShows` | Yes |
+| TV Shows | `/media/internal/fourteenTB/full_raid_backup/Media/TV shows` | Yes |
+| TV Shows | `/media/internal/fourteenTB/tvShows` | Yes |
+| TV Shows | `/media/internal/redThrees/pike/tv` | Yes |
+| TV Shows | `/media/internal/redThrees/walleye/tv` | Yes |
+| TV Shows | `/media/internal/sixTb/tvShows` | Yes |
+| TV Shows | `/media/internal/threeTB/tvShows` | Yes |
+| TV Shows | `/media/internal/twelveTb/tv` | Yes |
+| TV Shows | `/media/internal/twoTB/TV` | Yes |
+
+### Missing movie path
+
+`/media/internal/fourteenTb/movies` was not present. The mounted disk is `/media/internal/fourteenTB`, with a capital `B`. This suggests a stale or incorrectly cased library root, but the intended replacement was not established.
+
+Review the **Movies** library folders in Plex before changing the entry. This documentation work did not rename directories, edit the database, or trigger a scan.
+
+## Relationship to the media containers
+
+The Docker media services are documented in [Media and downloads](/services/media). Radarr, Sonarr, SABnzbd, and qBittorrent manage media or downloads; Tautulli and Maintainerr can integrate with Plex.
+
+Their presence does not prove the configured Plex integrations or automation rules are working. This inventory verified the native Plex service and its library roots without reading integration tokens.
+
+## Database backups and recovery
+
+Dated backup pairs for both the library and blobs databases were present for **2026-09-19, 2026-09-22, 2026-09-25, and 2026-09-28**, inside `Plug-in Support/Databases`.
+
+These files establish that local backup copies exist. They do not establish off-host backup coverage or a tested restore.
+
+Preserve the server data directory, settings, and the underlying library files when planning recovery. Handle the settings file as credential-bearing data. Follow the [Plex backup guide](https://support.plex.tv/articles/201539237-backing-up-plex-media-server-data/) and [scheduled database restore guide](https://support.plex.tv/articles/202485658-restore-a-database-backed-up-via-scheduled-tasks/) for the installed version. Stop the server before replacing database files and preserve `plex:plex` access.
+
+CrashPlan also runs on this host, but its backup selection was not verified. See [Backups, power, and storage](/infrastructure/host-reliability).
+
+## Routine inspection
+
+```sh
+systemctl status plexmediaserver.service --no-pager
+systemctl is-enabled plexmediaserver.service
+journalctl -u plexmediaserver.service --since today
+dpkg-query -W plexmediaserver
+curl -I http://127.0.0.1:32400/web/
+```
+
+A HTTP response checks the interface, not whether a movie plays successfully.
+
+For an intentional maintenance restart:
+
+```sh
+sudo systemctl restart plexmediaserver.service
+systemctl status plexmediaserver.service --no-pager
+```
+
+A restart interrupts active sessions. Plex package updates follow the host's package-management source, not a Komodo container deployment.
+
+## Inspection limits
+
+The current user could read the library database and list local database backups. `Preferences.xml` was protected, and passwordless sudo was unavailable. Remote access settings, transcoding settings, hardware acceleration, and client playback remain unverified.
