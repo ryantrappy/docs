@@ -28,6 +28,7 @@
         "icon": "layer-group",
         "pages": [
           "services/overview",
+          "services/plex",
           "services/platform",
           "services/networking",
           "services/media",
