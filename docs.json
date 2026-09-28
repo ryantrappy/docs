@@ -16,6 +16,13 @@
           "index",
           "quickstart"
         ]
+      },
+      {
+        "group": "Infrastructure",
+        "icon": "server",
+        "pages": [
+          "infrastructure/caddy"
+        ]
       }
     ],
     "global": {
