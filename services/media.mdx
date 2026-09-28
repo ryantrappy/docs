@@ -1,0 +1,290 @@
+---
+title: "Media and downloads"
+description: "Running containers, access, storage, and maintenance for media and downloads."
+icon: "film"
+---
+
+These containers support media requests, downloads, library automation, viewing history, and file cleanup. The snapshot was checked on **2026-09-28**.
+
+## Stack ownership and access
+
+Komodo confirms the six-service `arr_stack` and single-service `watcharr` stacks. qBittorrent's labels point to the older `/data/compose/68` Compose project.
+
+Maintainerr, MeTube, Czkawka, and iSponsorBlockTV have no Compose labels. Their original management source is not established by those labels.
+
+Caddy routes `ombi.ryantr.app` publicly. It guards `radarr`, `sonarr`, `sab`, `watcharr`, and `maintainerr` under `.ryantr.app` for LAN access. Routes and service details appear below.
+
+Plex is not in the running Docker inventory. Tautulli and Maintainerr may integrate with Plex, but their application configuration was not inspected.
+
+## Port mappings to verify
+
+| Container | Observed host → container mapping |
+| --- | --- |
+| `arr_stack-ombi-1` | `3579 → 5055/tcp` |
+| `arr_stack-overseerr-1` | `5055 → 3579/tcp` |
+| `arr_stack-sonarr-1` | `8112 → 8112/tcp`; `8989/tcp` is exposed without a host binding |
+
+These unusual mappings are recorded exactly as Docker reports them. Check the configured application listeners and browser responses before changing them. Caddy currently targets host ports 3579 for Ombi and 8112 for Sonarr. This inventory did not change or test those listeners.
+
+qBittorrent publishes 8989 and 6881; 6881 is bound over TCP and UDP. MeTube publishes 8085, Czkawka 5800, and Tautulli 8181. No Caddy route for those services or Overseerr was found.
+
+## Download and library storage
+
+SABnzbd uses `/media/internal/fourTbRed/complete` and `/media/internal/fourTbRed/incomplete`. Radarr and Sonarr share the completed-download path and mount `/media`.
+
+qBittorrent downloads live at `/media/internal/twelveTb/torrent`. MeTube writes into `/home/trappserver/Documents/metube`.
+
+Czkawka mounts `/media` writable at `/storage`; file operations in the app act on those host files.
+
+Preserve application configuration and the media/download files you need. A configuration backup does not include files elsewhere under `/media`.
+
+Use [Service operations](/operations/services) for maintenance and backup planning.
+
+## Container reference
+
+All listed containers were running. Docker health is a snapshot, not an application login or end-to-end availability test. Published ports were bound on all host interfaces; network controls determine reachability. Image references below show tags with digest suffixes omitted for readability.
+
+### arr_stack-ombi-1
+
+Ombi media request application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `lscr.io/linuxserver/ombi:latest` |
+| Compose project / service | `arr_stack` / `ombi` |
+| Network | `arr_stack_default` |
+| Host → container ports | `3579 → 5055/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+| Caddy route | [ombi.ryantr.app](https://ombi.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/ombi/config` | `/config` | Read/write |
+| `/media` | `/media` | Read/write |
+
+### arr_stack-overseerr-1
+
+Overseerr media request application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `lscr.io/linuxserver/overseerr:latest` |
+| Compose project / service | `arr_stack` / `overseerr` |
+| Network | `arr_stack_default` |
+| Host → container ports | `5055 → 3579/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/overseer/config` | `/config` | Read/write |
+| `/media` | `/media` | Read/write |
+
+### arr_stack-radarr-1
+
+Radarr movie library automation.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `lscr.io/linuxserver/radarr:latest` |
+| Compose project / service | `arr_stack` / `radarr` |
+| Network | `arr_stack_default` |
+| Host → container ports | `7878 → 7878/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+| Caddy route | [radarr.ryantr.app](https://radarr.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/media/internal/fourTbRed/complete` | `/downloads` | Read/write |
+| `/media` | `/media` | Read/write |
+| `/home/trappserver/Documents/radarr/config` | `/config` | Read/write |
+
+### arr_stack-sonarr-1
+
+Sonarr television library automation.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `lscr.io/linuxserver/sonarr:latest` |
+| Compose project / service | `arr_stack` / `sonarr` |
+| Network | `arr_stack_default` |
+| Host → container ports | `8112 → 8112/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+| Caddy route | [sonarr.ryantr.app](https://sonarr.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/sonarr/config` | `/config` | Read/write |
+| `/media/internal/fourTbRed/complete` | `/downloads` | Read/write |
+| `/media` | `/media` | Read/write |
+
+### arr_stack-sabnzbd-1
+
+SABnzbd Usenet download client.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `lscr.io/linuxserver/sabnzbd:latest` |
+| Compose project / service | `arr_stack` / `sabnzbd` |
+| Network | `arr_stack_default` |
+| Host → container ports | `8282 → 8080/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+| Caddy route | [sab.ryantr.app](https://sab.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/sabnzbd` | `/config` | Read/write |
+| `/media/internal/fourTbRed/complete` | `/downloads` | Read/write |
+| `/media/internal/fourTbRed/incomplete` | `/incomplete-downloads` | Read/write |
+| `/media` | `/media` | Read/write |
+
+### tautulli
+
+Plex activity and statistics application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `lscr.io/linuxserver/tautulli:latest` |
+| Compose project / service | `arr_stack` / `tautulli` |
+| Network | `arr_stack_default` |
+| Host → container ports | `8181 → 8181/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/tautulli/config` | `/config` | Read/write |
+
+### qbittorrent
+
+BitTorrent download client.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `lscr.io/linuxserver/qbittorrent:latest` |
+| Compose project / service | `qbittorrent` / `qbittorrent` |
+| Network | `qbittorrent_default` |
+| Host → container ports | `6881 → 6881/tcp`, `6881 → 6881/udp`, `8989 → 8989/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/qbittorrent` | `/config` | Read/write |
+| `/media/internal/twelveTb/torrent` | `/downloads` | Read/write |
+
+### watcharr
+
+Watch history and watchlist application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/sbondco/watcharr:latest` |
+| Compose project / service | `watcharr` / `watcharr` |
+| Network | `watcharr_default` |
+| Host → container ports | `3080 → 3080/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+| Caddy route | [watcharr.ryantr.app](https://watcharr.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/watcharr` | `/data` | Read/write |
+
+### maintainerr
+
+Media maintenance application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `jorenn92/maintainerr:latest` |
+| Compose project / service | No Compose labels |
+| Network | `bridge` |
+| Host → container ports | `6246 → 6246/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+| Caddy route | [maintainerr.ryantr.app](https://maintainerr.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/maintainerr` | `/opt/data` | Read/write |
+
+### metube
+
+MeTube video download interface.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/alexta69/metube:latest` |
+| Compose project / service | No Compose labels |
+| Network | `bridge` |
+| Host → container ports | `8085 → 8081/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/metube` | `/downloads` | Read/write |
+
+### duplicate_finder
+
+Czkawka duplicate file finder.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `jlesage/czkawka:latest` |
+| Compose project / service | No Compose labels |
+| Network | `bridge` |
+| Host → container ports | `5800 → 5800/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/czkawka` | `/config` | Read/write |
+| `/media` | `/storage` | Read/write |
+
+### youtube_blocker
+
+iSponsorBlockTV automation.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `dmunozv04/isponsorblocktv:latest` |
+| Compose project / service | No Compose labels |
+| Network | `bridge` |
+| Host → container ports | None |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/iSponsorBlockTV` | `/app/data` | Read/write |

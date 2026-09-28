@@ -1,0 +1,230 @@
+---
+title: "Management and monitoring"
+description: "Running containers, access, storage, and maintenance for management and monitoring."
+icon: "gear"
+---
+
+Komodo is the primary container management interface. Portainer and older Compose projects are also present. This reference was checked on **2026-09-28**.
+
+## Management plane
+
+Open [Komodo](https://komodo.ryantr.app) from the LAN. Caddy guards this hostname and forwards it to host port 9120. Core provides the management API and UI, Periphery manages the Docker host, and MongoDB stores Komodo state. Periphery and MongoDB have no host-published ports.
+
+The API reports one server, **Local**, with Periphery version **2.3.3**. Core and Periphery use image tag `:2`; the tag does not identify an exact release.
+
+Komodo's Compose file is `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml`. Core mounts its configuration and `/etc/komodo/backups`. Periphery mounts the Docker socket, `/proc`, and `/etc/komodo`. The `komodo_keys` volume is shared by Core and Periphery.
+
+The separate Komodo MCP stack publishes host port 8003. The project supports a Streamable HTTP `/mcp` endpoint, but this inspection did not test the endpoint or inspect client authentication. See the [Komodo MCP project](https://github.com/MP-Tool/komodo-mcp-server).
+
+## Other management and monitoring tools
+
+[Portainer](https://portainer.ryantr.app) and its [HTTPS upstream route](https://port.ryantr.app) are LAN-only Caddy routes. The older `/data/compose/...` labels in the inventory identify Portainer-era project locations, which may belong to Portainer's environment rather than directly accessible host paths.
+
+Uptime Kuma publishes host port 3001 and stores state in `/home/trappserver/Documents/uptime_kuma`. Configured monitors and notifications were not inspected.
+
+Homelable provides infrastructure visualization and status monitoring. Its frontend publishes 3002, backend 8002, and MCP interface 8001. The backend uses the `homelable_backend_data` volume. See the [Homelable project](https://github.com/Pouzor/homelable).
+
+No Caddy hostnames for Kuma, Homelable, or the Komodo MCP server were found.
+
+## Persistence and updates
+
+Retain Komodo's MongoDB volumes, keys volume, Core configuration, and backup directory. A backup directory mount does not prove that a backup is scheduled or restorable.
+
+Watchtower is running with the Docker socket mounted. Its update scope, schedule, and monitor-only behavior were not established. Review its settings when coordinating Komodo updates.
+
+Use [Service operations](/operations/services) for the maintenance workflow.
+
+## Container reference
+
+All listed containers were running. Docker health is a snapshot, not an application login or end-to-end availability test. Published ports were bound on all host interfaces; network controls determine reachability. Image references below show tags with digest suffixes omitted for readability.
+
+### komodo-core-1
+
+Komodo management API and browser interface.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/moghtech/komodo-core:2` |
+| Compose project / service | `komodo` / `core` |
+| Network | `komodo_default` |
+| Host → container ports | `9120 → 9120/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+| Caddy route | [komodo.ryantr.app](https://komodo.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/komodo/komodo/core.config.toml` | `/config/config.toml` | Read/write |
+| `/etc/komodo/backups` | `/backups` | Read/write |
+| Named volume `komodo_keys` | `/config/keys` | Read/write |
+
+### komodo-periphery-1
+
+Komodo agent for the local Docker host.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/moghtech/komodo-periphery:2` |
+| Compose project / service | `komodo` / `periphery` |
+| Network | `komodo_default` |
+| Host → container ports | None |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | Read/write |
+| `/proc` | `/proc` | Read/write |
+| `/etc/komodo` | `/etc/komodo` | Read/write |
+| Named volume `komodo_keys` | `/config/keys` | Read/write |
+
+### komodo-mongo-1
+
+MongoDB database for Komodo.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `mongo` |
+| Compose project / service | `komodo` / `mongo` |
+| Network | `komodo_default` |
+| Host → container ports | None |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Named volume `komodo_mongo-config` | `/data/configdb` | Read/write |
+| Named volume `komodo_mongo-data` | `/data/db` | Read/write |
+
+### komodo-mcp-komodo-mcp-server-1
+
+MCP interface for Komodo.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/mp-tool/komodo-mcp-server:latest` |
+| Compose project / service | `komodo-mcp` / `komodo-mcp-server` |
+| Network | `komodo-mcp_default` |
+| Host → container ports | `8003 → 8000/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Anonymous Docker volume | `/app/logs` | Read/write |
+
+### portainer
+
+Container administration interface.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `portainer/portainer-ce:latest` |
+| Compose project / service | No Compose labels |
+| Network | `bridge` |
+| Host → container ports | `8000 → 8000/tcp`, `9000 → 9000/tcp`, `9443 → 9443/tcp` |
+| Restart policy | `always` |
+| Docker health | No healthcheck configured |
+| Caddy route | [port.ryantr.app](https://port.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Named volume `portainer_data` | `/data` | Read/write |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | Read/write |
+
+### watchtower
+
+Container image update automation.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `containrrr/watchtower:latest` |
+| Compose project / service | No Compose labels |
+| Network | `bridge` |
+| Host → container ports | None |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | Read/write |
+
+### uptime_kuma-uptime-kuma-1
+
+Availability monitoring application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `louislam/uptime-kuma:2` |
+| Compose project / service | `uptime_kuma` / `uptime-kuma` |
+| Network | `uptime_kuma_default` |
+| Host → container ports | `3001 → 3001/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/uptime_kuma` | `/app/data` | Read/write |
+
+### homelable-frontend-1
+
+Homelable browser interface.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/pouzor/homelable-frontend:latest` |
+| Compose project / service | `homelable` / `frontend` |
+| Network | `homelable_homelable` |
+| Host → container ports | `3002 → 80/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+No Docker mounts were present in this snapshot.
+
+### homelable-backend-1
+
+Homelable backend for diagrams and status data.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/pouzor/homelable-backend:latest` |
+| Compose project / service | `homelable` / `backend` |
+| Network | `homelable_homelable` |
+| Host → container ports | `8002 → 8000/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| Named volume `homelable_backend_data` | `/app/data` | Read/write |
+
+### homelable-mcp-1
+
+Homelable MCP interface.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/pouzor/homelable-mcp:latest` |
+| Compose project / service | `homelable` / `mcp` |
+| Network | `homelable_homelable` |
+| Host → container ports | `8001 → 8001/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+No Docker mounts were present in this snapshot.

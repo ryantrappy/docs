@@ -1,0 +1,168 @@
+---
+title: "Networking and DNS"
+description: "Running containers, access, storage, and maintenance for networking and dns."
+icon: "network-wired"
+---
+
+These containers support HTTPS routing, Cloudflare connectivity, DNS, and network monitoring. The running-container snapshot was checked on **2026-09-28**.
+
+## Proxy, tunnel, and dynamic DNS
+
+[Caddy setup](/infrastructure/caddy) documents hostnames, Cloudflare certificates, LAN access, and automatic UniFi DNS additions.
+
+Komodo confirms `cloudflared` and `cloudflare-ddns` as running stacks. Both use host networking and have no Docker mounts. Tunnel destinations and selected DNS records were not queried. Retain their deployment configuration and credentials when migrating.
+
+A running tunnel connector does not establish that every Caddy hostname also has a tunnel route.
+
+## Blocky migration
+
+Blocky is **still running** and reports healthy in this snapshot. It publishes DNS over TCP and UDP 53 and host port 4001 to container port 4000.
+
+The migration notes identify UniFi at `192.168.1.1` as the primary LAN DNS server. Blocky at `192.168.1.236` remains a compatibility resolver for old DHCP leases and manually configured clients, forwarding to the gateway. Review client migration before retiring it. See [Caddy's migration context](/infrastructure/caddy#blocky-migration-context).
+
+Its configuration is mounted from `/home/trappserver/Documents/blocky/config.yml`.
+
+## Network Optimizer
+
+The `network-optimizer` project includes the main application, speed test service, and InfluxDB. Compose labels point to `/data/compose/67/docker-compose.yml`; the project is not among the nine running stacks returned by Komodo's API.
+
+The main application uses host networking. Its UI listener was not verified. The speed test publishes 3005; InfluxDB publishes 8086.
+
+Network Optimizer provides UniFi monitoring and analysis. See the [project documentation](https://github.com/Ozark-Connect/NetworkOptimizer). This inspection did not audit or change the network.
+
+Retain the application data, InfluxDB data/configuration, Blocky configuration, and deployment definitions. The SSH key directory is credential storage. The Caddy page lists its certificate and configuration mounts.
+
+Use [Service operations](/operations/services) for routine maintenance.
+
+## Container reference
+
+All listed containers were running. Docker health is a snapshot, not an application login or end-to-end availability test. Published ports were bound on all host interfaces; network controls determine reachability. Image references below show tags with digest suffixes omitted for readability.
+
+### caddy-v2-caddy-1
+
+HTTPS reverse proxy and static website server.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `custom-caddy:0.0.1` |
+| Compose project / service | `caddy-v2` / `caddy` |
+| Network | `host` |
+| Host → container ports | Host networking; listener not shown by mappings |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+| Caddy route | [Caddy setup](/infrastructure/caddy) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/caddy_v2/certs` | `/etc/caddy/certs` | Read-only |
+| `/home/trappserver/Documents/caddy_v2/data` | `/data` | Read/write |
+| `/home/trappserver/Documents/caddy_v2/config` | `/config` | Read/write |
+| `/var/www` | `/srv` | Read/write |
+| `/home/trappserver/Documents/caddy_v2/Caddyfile` | `/etc/caddy/Caddyfile` | Read-only |
+
+### cloudflared
+
+Cloudflare Tunnel connector.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `cloudflare/cloudflared:latest` |
+| Compose project / service | `cloudflared` / `cloudflared` |
+| Network | `host` |
+| Host → container ports | Host networking; listener not shown by mappings |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+No Docker mounts were present in this snapshot.
+
+### cloudflare-ddns-cloudflare-ddns-1
+
+Cloudflare dynamic DNS updater.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `favonia/cloudflare-ddns:latest` |
+| Compose project / service | `cloudflare-ddns` / `cloudflare-ddns` |
+| Network | `host` |
+| Host → container ports | Host networking; listener not shown by mappings |
+| Restart policy | `always` |
+| Docker health | No healthcheck configured |
+
+No Docker mounts were present in this snapshot.
+
+### blocky
+
+Compatibility DNS resolver during UniFi migration.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `spx01/blocky:latest` |
+| Compose project / service | No Compose labels |
+| Network | `bridge` |
+| Host → container ports | `4001 → 4000/tcp`, `53 → 53/tcp`, `53 → 53/udp` |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/blocky/config.yml` | `/app/config.yml` | Read/write |
+
+### network-optimizer
+
+UniFi network monitoring and analysis application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/ozark-connect/network-optimizer:latest` |
+| Compose project / service | `network-optimizer` / `network-optimizer` |
+| Network | `host` |
+| Host → container ports | Host networking; listener not shown by mappings |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/network-optimizer/ssh-keys` | `/app/ssh-keys` | Read/write |
+| `/home/trappserver/Documents/network-optimizer/data` | `/app/data` | Read/write |
+| `/home/trappserver/Documents/network-optimizer/logs` | `/app/logs` | Read/write |
+
+### network-optimizer-speedtest
+
+Companion browser speed test service.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/ozark-connect/speedtest:latest` |
+| Compose project / service | `network-optimizer` / `network-optimizer-speedtest` |
+| Network | `network-optimizer_default` |
+| Host → container ports | `3005 → 3000/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+No Docker mounts were present in this snapshot.
+
+### influxdb
+
+Time-series database in the network-optimizer project.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `influxdb:2` |
+| Compose project / service | `network-optimizer` / `influxdb` |
+| Network | `network-optimizer_default` |
+| Host → container ports | `8086 → 8086/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/influxdb/influxdb-data` | `/var/lib/influxdb2` | Read/write |
+| `/home/trappserver/Documents/influxdb/influxdb-config` | `/etc/influxdb2` | Read/write |

@@ -1,47 +1,64 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Homelab quickstart"
+description: "Find the management tools, inspect services, and locate deployment configuration before making a change."
+icon: "compass"
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+Use this checklist to get oriented on Trappserver before changing a service.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+## Connect from the LAN
 
-## Prerequisites
+The Docker host is `192.168.1.236` on `192.168.1.0/24`. UniFi at `192.168.1.1` supplies the primary LAN DNS described in the migration notes.
 
-Before you begin, you must have:
+Open [Komodo](https://komodo.ryantr.app) to review managed stacks. [Portainer](https://port.ryantr.app) is also present for older deployments. Sign in using your existing account.
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+For terminal work, use your existing authenticated session on the host. The inspection commands below require Docker access.
 
-## Get started
+## Check the host and containers
 
-<Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+```sh
+docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+docker ps -a --filter status=exited
+docker stats --no-stream
+df -h
+```
 
-    ```bash
-    npm install your-package
-    ```
-  </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+Match the service to the [inventory](/services/overview). Docker's **running** state only confirms the process is up. **Healthy** means its configured healthcheck passes. Many services have no healthcheck.
 
-    ```bash
-    your-cli init
-    ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+## Locate the deployment and data
 
-    ```bash
-    your-cli start
-    ```
-  </Step>
-</Steps>
+Read the service page before editing. It lists Compose project labels, published ports, restart policy, and mounts.
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+Komodo-managed stacks commonly use generated Compose files under `/etc/komodo/stacks`. The rankings application uses a linked repository under `/etc/komodo/repos`. Older projects show `/data/compose/...` labels. Standalone containers may have no Compose labels.
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+Use the existing deployment manager and its stored environment settings when recreating a service. An ad hoc Compose invocation can select a different project or omit credentials.
+
+## Check a service
+
+For a Paperless example:
+
+```sh
+docker logs --tail 100 paperless-webserver-1
+curl -I https://paperless.ryantr.app
+curl -I --resolve paperless.ryantr.app:443:192.168.1.236 https://paperless.ryantr.app
+```
+
+The last check bypasses DNS while preserving the HTTPS hostname. A login redirect can be a successful application response. If direct routing works but the normal hostname fails, check DNS.
+
+For an internal name, a LAN client with `dig` can query the gateway:
+
+```sh
+dig @192.168.1.1 radarr.ryantr.app A +short
+```
+
+The local record should point to `192.168.1.236`. See [Caddy setup](/infrastructure/caddy) for routing and certificate checks.
+
+## Make a change and leave a record
+
+1. Identify the owning stack and data paths.
+2. Review backup coverage and expected downtime.
+3. Make the change in the existing deployment source.
+4. Verify container state, logs, DNS, and the application.
+5. Update the corresponding documentation with what changed and the verification date.
+
+Use [Service operations](/operations/services) for the detailed workflow.

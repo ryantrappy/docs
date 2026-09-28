@@ -1,0 +1,125 @@
+---
+title: "Paperless and document management"
+description: "Running containers, access, storage, and maintenance for paperless and document management."
+icon: "file-lines"
+---
+
+Paperless-ngx runs as a three-container Komodo stack. Paperless AI is a separate container. This reference was checked on **2026-09-28**.
+
+## Access and deployment
+
+[Paperless](https://paperless.ryantr.app) is a public Caddy route to host port 8010, mapped to webserver port 8000. Paperless AI publishes 8087 to port 3000 and has no current Caddy route.
+
+Komodo manages `paperless` from `/etc/komodo/stacks/paperless/compose.yaml`. The webserver, PostgreSQL database, and Redis broker share `paperless_default`. Database and broker ports are not published to the host.
+
+Paperless AI's API connection, provider, and processing settings were not inspected.
+
+## Storage and recovery
+
+| Data | Host location |
+| --- | --- |
+| Application data | `/media/internal/sixTb/paperless/data` |
+| Document media | `/media/internal/sixTb/paperless/media` |
+| PostgreSQL data | `/home/trappserver/Documents/paperless/pgdata` |
+| Redis data | `/home/trappserver/Documents/paperless/redisdata` |
+| Consume directory | `/etc/komodo/stacks/paperless/consume` |
+| Export directory | `/etc/komodo/stacks/paperless/export` |
+| Paperless AI state | `/home/trappserver/Documents/paperless-ai` |
+
+Plan updates for the webserver and database together. Preserve documents and database state together. An export directory mount does not prove that an export has run.
+
+Consult the [Paperless-ngx administration documentation](https://docs.paperless-ngx.com/administration/) matching the installed release for export and restore procedures. A backup or restore was not tested in this inspection.
+
+Start with webserver logs, then database and broker state:
+
+```sh
+docker logs --tail 100 paperless-webserver-1
+docker logs --tail 100 paperless-db-1
+docker logs --tail 100 paperless-broker-1
+```
+
+Use [Service operations](/operations/services) for the shared workflow.
+
+## Container reference
+
+All listed containers were running. Docker health is a snapshot, not an application login or end-to-end availability test. Published ports were bound on all host interfaces; network controls determine reachability. Image references below show tags with digest suffixes omitted for readability.
+
+### paperless-webserver-1
+
+Paperless-ngx document management application.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `ghcr.io/paperless-ngx/paperless-ngx:latest` |
+| Compose project / service | `paperless` / `webserver` |
+| Network | `paperless_default` |
+| Host → container ports | `8010 → 8000/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+| Caddy route | [paperless.ryantr.app](https://paperless.ryantr.app) |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/etc/komodo/stacks/paperless/export` | `/usr/src/paperless/export` | Read/write |
+| `/media/internal/sixTb/paperless/media` | `/usr/src/paperless/media` | Read/write |
+| `/etc/komodo/stacks/paperless/consume` | `/usr/src/paperless/consume` | Read/write |
+| `/media/internal/sixTb/paperless/data` | `/usr/src/paperless/data` | Read/write |
+
+### paperless-db-1
+
+PostgreSQL database for Paperless.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `docker.io/library/postgres:16` |
+| Compose project / service | `paperless` / `db` |
+| Network | `paperless_default` |
+| Host → container ports | None |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/paperless/pgdata` | `/var/lib/postgresql/data` | Read/write |
+
+### paperless-broker-1
+
+Redis broker for Paperless.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `docker.io/library/redis:7` |
+| Compose project / service | `paperless` / `broker` |
+| Network | `paperless_default` |
+| Host → container ports | None |
+| Restart policy | `unless-stopped` |
+| Docker health | No healthcheck configured |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/paperless/redisdata` | `/data` | Read/write |
+
+### paperless-ai
+
+AI companion for Paperless.
+
+| Setting | Observed value |
+| --- | --- |
+| Image tag | `clusterzx/paperless-ai:latest` |
+| Compose project / service | No Compose labels |
+| Network | `bridge` |
+| Host → container ports | `8087 → 3000/tcp` |
+| Restart policy | `unless-stopped` |
+| Docker health | Healthy at inventory time |
+
+Mounts:
+
+| Host path or Docker volume | Container path | Access |
+| --- | --- | --- |
+| `/home/trappserver/Documents/paperless-ai` | `/app/data` | Read/write |
