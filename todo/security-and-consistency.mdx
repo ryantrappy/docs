@@ -71,11 +71,13 @@ Before a change, identify the owning deployment, record the current version/conf
 
 ### 04. Verify Grafana's effective administrator credential
 
-**Evidence — configuration finding:** TeslaMate Grafana's `GF_SECURITY_ADMIN_PASSWORD` environment value matches a common placeholder. Anonymous access is configured off. This does **not** prove the current database-stored admin password still matches that value; it may have been changed after initialization.
+- [x] **Complete — 2026-09-29:** The configured `GF_SECURITY_ADMIN_PASSWORD` placeholder does not authenticate to the running TeslaMate Grafana login. The effective administrator password was changed after the database was initialized, so no credential reset was needed.
 
-**Suggested fix:** Verify the effective administrator account locally. Replace any default credential, protect the deployment setting, and use the application's supported account recovery/rotation process. Review access through the directly published Grafana port.
+**Verification:** A local login request using the configured placeholder returned HTTP 401. The persistent database has one enabled administrator account (`admin`), updated shortly after creation in 2022. Anonymous access, Basic authentication, and self-signup are disabled. Unauthenticated requests to `/api/user` and `/api/org` returned HTTP 401. Grafana's health endpoint returned 200. The database lives in named volume `teslamate_teslamate-grafana-data`, which survives routine container recreation.
 
-- [ ] **Done when:** The effective admin credential is unique, the placeholder cannot be used to sign in, and access is limited to intended users.
+**Deployment note:** The `teslamate/grafana:latest` image still provides a placeholder bootstrap setting; the Portainer-owned Compose file does not set that variable. The existing database ignores this initial password setting. For a fresh data volume, set a unique bootstrap secret before starting Grafana, and store it in the password manager.
+
+**Access and limits:** Port `3000` is published directly, with no Caddy route. Authentication is required; router/WAN reachability was outside this credential check. The current password value was not read or rotated, so reuse elsewhere cannot be independently ruled out. If ownership or uniqueness is uncertain, rotate it through Grafana's supported workflow. No application setting, session, or container was changed.
 
 ## P1 — databases and recovery
 
