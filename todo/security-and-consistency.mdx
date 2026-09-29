@@ -1,0 +1,204 @@
+---
+title: "Security and consistency checklist"
+description: "Prioritized homelab fixes, observed evidence, and completion checks to work through one at a time."
+icon: "list-check"
+---
+
+This is a work list from a **read-only review on 2026-09-29**, supplemented by the infrastructure references checked on 2026-09-28. No remediation was performed. Work through one item at a time and record the result after verifying it.
+
+**Scope:** Docker runtime settings, selected readable deployment files, credential file permissions, host listeners, database versions, and existing homelab documentation. Router rules, internet reachability, effective application passwords, backup restores, and a full vulnerability scan were not tested. A port bound to every interface is a confirmed configuration finding; it does not by itself prove internet exposure.
+
+Keep secret values, recovery codes, and private keys out of this page. Recheck each finding before changing a service.
+
+## Suggested order
+
+| Priority | Start with |
+| --- | --- |
+| P1 — first | Credentials, management access, unsupported databases, and usable backups |
+| P2 — next | Update ownership, container privileges, proxy security, logging, and recovery behavior |
+| P3 — cleanup | Port mismatches, stale routes, library paths, and duplicate automation |
+
+Before a change, identify the owning deployment, record the current version/configuration, and confirm a rollback or restore method. Use [Service operations](/operations/services) for the workflow. Changes to generated files under `/etc/komodo` may be overwritten; fix the owning Komodo settings or source repository.
+
+## P1 — credentials and access
+
+### 01. Protect and replace exposed deployment credentials
+
+**Evidence — confirmed:** The rankings checkout's `.git/config` contains a credential in its HTTPS remote URL and has mode `0644`. The checkout directories were readable by the current non-root account. Homelable's `.env` has mode `0664` and includes `MCP_API_KEY`, `SECRET_KEY`, and a password-hash setting. Other inspected credential stores, including `~/.git-credentials` and `~/.codex/config.toml`, already use `0600`.
+
+**Suggested fix:** Restrict access to the affected files and checkout directories through the owning deployment workflow. Replace the affected Git credential, use the narrowest repository permissions needed, and avoid persisting reusable credentials in readable remote URLs where the manager supports another mechanism. Review Homelable key exposure and rotation requirements, including effects on existing sessions and MCP clients. Check whether old credentials also appear in private logs, backups, or Git history; document locations without copying values here.
+
+- [ ] **Done when:** Only intended accounts can read credential-bearing files, replaced credentials are revoked, deployments still authenticate, and the next Komodo refresh does not recreate the exposure.
+
+### 02. Restrict direct management and application ports
+
+**Evidence — confirmed bindings; reachability needs verification:** Komodo, Portainer, InfluxDB, Uptime Kuma, Homelable, and both MCP services publish ports on `0.0.0.0` and `::`. Many application ports do too. Caddy's `internal-only` rule applies only to requests through Caddy; direct ports bypass that rule.
+
+**Suggested fix:** Classify each listener as public, trusted LAN/VPN, container-only, or proxy-only. For services reached only through host-networked Caddy, consider loopback port bindings. Keep necessary LAN services on an intended interface and apply tested firewall rules. Review IPv6 separately and check router forwards and tunnel routes. Docker's rules can interact with host firewall tools, so verify access from clients rather than relying on an assumed UFW policy. See [Docker port publishing](https://docs.docker.com/engine/network/port-publishing/) and [Docker firewall behavior](https://docs.docker.com/engine/network/packet-filtering-firewalls/).
+
+- [ ] **Done when:** A trusted client can reach intended services, an untrusted network cannot reach management ports directly, and public apps work through the approved ingress path on both address families.
+
+### 03. Treat Docker management and MCP tools as privileged access
+
+**Evidence — confirmed mounts and listeners; authorization needs verification:** Portainer, Komodo Periphery, and Watchtower mount the Docker socket. The Komodo MCP server publishes host port `8003`; Homelable MCP publishes `8001`. Socket access can permit control of the host through Docker. MCP authentication and effective tool permissions were not tested. See [Docker daemon security](https://docs.docker.com/engine/security/).
+
+**Suggested fix:** Keep management tools on a trusted network/VPN and verify authentication, account permissions, and token scopes. Give MCP integrations only the access they need and separate read-only inventory use from deployment or destructive actions where supported. Keep socket mounts only on components that require them; a read-only bind flag alone is not a Docker API authorization policy.
+
+- [ ] **Done when:** Unauthenticated requests are rejected, each integration has documented permissions, and Docker control is available only to trusted administrators and required services.
+
+### 04. Verify Grafana's effective administrator credential
+
+**Evidence — configuration finding:** TeslaMate Grafana's `GF_SECURITY_ADMIN_PASSWORD` environment value matches a common placeholder. Anonymous access is configured off. This does **not** prove the current database-stored admin password still matches that value; it may have been changed after initialization.
+
+**Suggested fix:** Verify the effective administrator account locally. Replace any default credential, protect the deployment setting, and use the application's supported account recovery/rotation process. Review access through the directly published Grafana port.
+
+- [ ] **Done when:** The effective admin credential is unique, the placeholder cannot be used to sign in, and access is limited to intended users.
+
+## P1 — databases and recovery
+
+### 05. Migrate TeslaMate away from PostgreSQL 13
+
+**Evidence — confirmed runtime:** `teslamate_database_1` reports PostgreSQL **13.23**. PostgreSQL 13 support ended on **2025-11-13**, so this major version no longer receives community fixes. See the [PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/).
+
+**Suggested fix:** Identify the TeslaMate release and its supported database versions. Take an application-consistent backup, prove a restore in isolation, and plan a supported major-version migration. Changing the image tag while reusing an old database directory is not a migration.
+
+- [ ] **Done when:** TeslaMate uses a supported PostgreSQL major version, historical data and dashboards work, and a tested backup plus rollback plan exist.
+
+### 06. Plan Immich's PostgreSQL updates before support ends
+
+**Evidence — confirmed runtime:** Immich's database reports PostgreSQL **14.17**. PostgreSQL 14 community support ends on **2026-11-12**. Its current image also includes Immich-specific vector extensions and is pinned by digest.
+
+**Suggested fix:** Review the installed Immich release and its database upgrade instructions. Update through an Immich-supported image and extension combination, and plan the major-version transition before the support deadline. Preserve the intentional image pin until a tested replacement is chosen; do not substitute a generic PostgreSQL image.
+
+- [ ] **Done when:** The supported update path is documented, a restore is tested, and the selected Immich/database combination receives current fixes.
+
+### 07. Prove backup coverage and restores
+
+**Evidence — needs verification:** CrashPlan is running and local application backup files exist, but the documented review did not verify selections, destinations, retention, or restores. Local copies do not establish off-host recovery. Important data lives in both bind mounts and named Docker volumes.
+
+**Suggested fix:** Build a coverage list for Komodo configuration/MongoDB, rankings MongoDB, Immich database/uploads/external libraries, Paperless documents/database, Plex metadata, Tandoor, TeslaMate, Home Assistant, and UniFi. Include the configuration and protected credentials needed to rebuild the host. Use application-supported database backups or coordinated snapshots. Record the last successful backup and restore test; keep an isolated or off-host copy and protect its credentials.
+
+- [ ] **Done when:** You can restore one representative service into an isolated environment, every critical data set has an owner and schedule, and missing/failed backups generate an alert.
+
+See [Backups, power, and storage](/infrastructure/host-reliability) and [recovery data by service](/operations/services#backup-and-recovery-planning).
+
+## P2 — security and operational consistency
+
+### 08. Choose one update owner per service
+
+**Evidence — confirmed configuration; broad scope inferred from defaults:** Watchtower has no command arguments and no inspected opt-in or monitor-only environment settings. Containers lack its enable/disable labels. Its documented default is to watch all containers. Komodo-managed stacks, Portainer-era stacks, standalone containers, moving image tags, and local builds coexist. See [Watchtower selection rules](https://containrrr.dev/watchtower/container-selection/).
+
+**Suggested fix:** Decide which services use reviewed manager-driven updates and which may update automatically. Consider Watchtower opt-in or monitor-only use, especially for databases and applications with coordinated upgrades. Record installed versions/digests, backup prerequisites, maintenance windows, and rollback plans. Use explicit release tags or digests where reproducibility matters, paired with a regular update process.
+
+- [ ] **Done when:** Each service has one documented update owner, database upgrades cannot happen accidentally, and local Caddy/rankings images retain their intended build workflow.
+
+### 09. Complete the Blocky transition and reduce its privileges
+
+**Evidence — confirmed:** Blocky still runs with `privileged=true`, a writable configuration mount, DNS on all interfaces, and a published HTTP port. The [DNS migration reference](/infrastructure/caddy#blocky-migration-context) describes it as temporary compatibility for clients moving to UniFi DNS.
+
+**Suggested fix:** First identify remaining DHCP or manually configured clients that still need Blocky. If it remains necessary, test operation without full privileges, keep only required capabilities, make configuration read-only where possible, and restrict DNS/HTTP access to intended networks. If it is no longer needed, retire it through its owning deployment after verifying client migration.
+
+- [ ] **Done when:** Client DNS works after the planned transition and no retained compatibility service has unexplained full privileges or unintended resolver exposure.
+
+### 10. Verify certificates on internal upstream connections
+
+**Evidence — confirmed configuration/documentation:** Caddy's Portainer TLS route uses `tls_insecure_skip_verify`. The UniFi upstream has no explicit HTTPS transport. The documented UniFi DNS automation disables controller certificate verification.
+
+**Suggested fix:** Use a certificate and hostname that clients can verify, or trust a suitable private CA in the relevant client. Configure upstream TLS intentionally. Coordinate trust changes with the DNS sync and other integrations so they continue working. Browser-facing Caddy HTTPS does not secure every upstream hop. See [Caddy transport options](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#the-http-transport).
+
+- [ ] **Done when:** Proxy and automation connections verify the intended server identity, no skip-verification exception remains unexplained, and DNS automation still succeeds.
+
+### 11. Review public app authentication and ingress paths
+
+**Evidence — confirmed proxy classification; effective protection needs verification:** Home Assistant, Ombi, rankings, Invoice Ninja, Tandoor, Paperless, and Immich routes lack Caddy's LAN-only guard. Cloudflared also runs. Router forwards, tunnel destinations, application authentication, and MFA coverage were not audited.
+
+**Suggested fix:** Confirm which apps intentionally accept internet traffic. Verify application authentication and MFA where supported, review tunnel/router destinations, and keep administrative endpoints private. For browser-only private apps, consider an identity-aware access layer; account for mobile clients, webhooks, and APIs before adding one. Test Caddy's peer-address guard against each actual ingress path instead of assuming forwarded headers or a tunnel preserve the expected source address.
+
+- [ ] **Done when:** Every public route has an intentional audience and tested authentication, private routes remain blocked over each ingress path, and legitimate integrations still work.
+
+### 12. Narrow writable mounts and container permissions
+
+**Evidence — confirmed mounts:** Ombi and Overseerr mount the entire `/media` tree writable. Duplicate Finder also has broad writable media access. Caddy mounts static site content writable even though it serves files. Several containers explicitly add broad capability lists.
+
+**Suggested fix:** Review what each application actually writes. Remove unnecessary mounts, narrow them to required directories, and use read-only access for consumers. Preserve write access for tools intentionally editing or deleting media. Reduce capabilities and use a non-root application user where the image supports it; test permissions per service rather than applying a blanket change.
+
+- [ ] **Done when:** Each writable path and capability has a documented purpose, browsing-only apps cannot modify media/site content, and intended workflows still succeed.
+
+### 13. Add bounded Docker log retention
+
+**Evidence — confirmed:** Most running containers use `json-file` with empty rotation options. The inspected daemon configuration has no logging defaults. Network Optimizer's speed-test container already sets `max-size=10m` and `max-file=3`. Docker's default JSON log size is unlimited. See [Docker JSON logging](https://docs.docker.com/engine/logging/drivers/json-file/).
+
+**Suggested fix:** Define a retention budget and use rotation settings consistently, either in deployment definitions or daemon defaults. Preserve enough logs for diagnosis. Existing containers need recreation to inherit new daemon defaults; plan that through each owning manager.
+
+- [ ] **Done when:** Active containers have bounded logs, required diagnostic history remains available, and disk-usage alerts are tested.
+
+### 14. Improve rankings recovery and health reporting
+
+**Evidence — confirmed runtime:** `fantasy-rankings-rankings_studio-1` has restart policy `no` and no Docker health check; MongoDB has a restart policy and health check. The app now uses a local image, so the earlier published-image/browser-env mismatch should not be treated as an uncorrected issue without retesting.
+
+**Suggested fix:** Choose an appropriate app restart policy and add a meaningful readiness/health check. Monitor the browser route separately from process state. Confirm the current build includes the public Auth0 settings and server variables arrive through the existing deployment environment. A health check alone does not automatically restart an unhealthy container.
+
+- [ ] **Done when:** The app recovers after a planned restart/reboot, monitoring detects an unavailable route, and sign-in configuration is verified against the current build.
+
+### 15. Test UPS, disk alerts, and notification delivery
+
+**Evidence — documented gaps plus a current failure:** UPS and SMART daemons are running, but power-failure behavior, drive health/self-tests, and alert delivery were not established. `postfix@-.service` currently reports failed; whether any alerts depend on it is unknown.
+
+**Suggested fix:** Check UPS runtime and shutdown settings, review SMART results, and identify the actual notification path. If local mail is required, investigate Postfix; otherwise document the alternative and remove the assumption that mail works. Schedule a controlled UPS/shutdown test with backups and a maintenance window.
+
+- [ ] **Done when:** A disk/backup/power alert reaches you, the controlled power test completes cleanly, and any failed mail service is resolved or documented as unused.
+
+### 16. Review host listeners and network separation
+
+**Evidence — confirmed listeners; policy needs verification:** SSH and CUPS listen on IPv4 and IPv6 wildcard addresses. Homebridge and other native/host-network services also listen outside loopback. Existing documentation records desktop, printing, discovery, and remote-desktop services; their current necessity and effective firewall rules need review.
+
+**Suggested fix:** Identify the owner and purpose of each listener, verify effective SSH authentication/root-login rules and live Fail2Ban state, and restrict printer/desktop/admin services to intended clients. Review trusted admin, IoT, guest, and public-app access boundaries at the gateway. Avoid disabling discovery needed by HomeKit or other devices without a replacement plan.
+
+- [ ] **Done when:** Required listeners and allowed client networks are documented, SSH policy is verified, and guest/IoT clients cannot reach management services unless explicitly allowed.
+
+## P3 — inconsistencies and cleanup
+
+### 17. Correct Homelable's internal backend port
+
+**Evidence — confirmed mismatch; functional impact needs verification:** Homelable publishes backend host port `8002` to container port `8000`, but MCP's `BACKEND_URL` is `http://backend:8002`. Compose service-to-service traffic should use the backend's listening container port.
+
+**Suggested fix:** Verify the backend listener, then change the source configuration to `http://backend:8000` if it is the intended endpoint. Review allowed browser origins separately; do not broaden CORS to hide the problem.
+
+- [ ] **Done when:** MCP can read the backend through service DNS, browser access works from approved origins, and no dependency on the host port remains.
+
+### 18. Reconcile proxy routes, redirects, and DNS updaters
+
+**Evidence — configuration inconsistencies:** The DuckDNS redirect targets a different LAN address from the documented Caddy host. Caddy includes Invoice Ninja and Scrutiny upstreams, but the current inventory showed neither a matching container nor a host listener on their configured local ports. Native `ddclient` and Docker Cloudflare DDNS both exist; record ownership was not established.
+
+**Suggested fix:** Decide whether each route is active, intentionally dormant, or obsolete. Test the intended upstream before updating or removing a route. Correct or retire the legacy redirect after confirming its purpose. Map each DNS updater to its provider and record names, and remove overlap only after establishing which updater should own each record.
+
+- [ ] **Done when:** Active routes reach intended services, dormant routes are clearly marked, legacy redirects have an intentional destination, and each dynamic DNS record has one owner.
+
+### 19. Resolve the missing Plex library root
+
+**Evidence — documented and rechecked:** `/media/internal/fourteenTb/movies` does not exist. The mounted disk uses `fourteenTB`. The intended media directory still needs confirmation.
+
+**Suggested fix:** Review the Movies library in Plex and the actual files. Correct or remove the stale root through Plex after confirming the intended location. Preserve metadata and avoid automatic trash cleanup until the library and mounts are correct.
+
+- [ ] **Done when:** Every configured library root exists, sample media plays, and no metadata or files were lost during cleanup.
+
+See [Plex library roots](/services/plex#library-roots).
+
+### 20. Document missing dependencies and deployment sources
+
+**Evidence — inventory gaps:** Tandoor is running, but its database location is still unverified. TeslaMate's database, MQTT broker, and Grafana run, while no TeslaMate logger container appeared in the current Docker inventory. Some workloads retain Portainer-era Compose labels or no saved Compose label.
+
+**Suggested fix:** Identify Tandoor's real database and backup method, and establish whether the TeslaMate logger runs elsewhere, is intentionally stopped, or is missing. Record the deployment source and recovery instructions for standalone/legacy containers before any consolidation. Verify data freshness rather than equating a running dashboard with a working collector.
+
+- [ ] **Done when:** Each app's dependencies, persistent data, deployment owner, and recreation procedure are documented, and expected data collection is current.
+
+## Track progress
+
+For each completed item, record:
+
+- Completion date and the owning deployment or source commit.
+- What changed and how you verified it.
+- Backup/rollback location, without secret values.
+- Any remaining limitation or follow-up.
+
+Revisit this list after network, storage, authentication, or deployment changes. A completed item should describe tested behavior, not only a configuration edit.
