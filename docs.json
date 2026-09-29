@@ -46,6 +46,13 @@
         "pages": [
           "operations/services"
         ]
+      },
+      {
+        "group": "TODO",
+        "icon": "list-check",
+        "pages": [
+          "todo/security-and-consistency"
+        ]
       }
     ]
   },
