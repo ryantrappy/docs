@@ -87,13 +87,15 @@ Before a change, identify the owning deployment, record the current version/conf
 
 - [ ] **Done when:** TeslaMate uses a supported PostgreSQL major version, historical data and dashboards work, and a tested backup plus rollback plan exist.
 
-### 06. Plan Immich's PostgreSQL updates before support ends
+### 06. Upgrade Immich's PostgreSQL before support ends
 
-**Evidence — confirmed runtime:** Immich's database reports PostgreSQL **14.17**. PostgreSQL 14 community support ends on **2026-11-12**. Its current image also includes Immich-specific vector extensions and is pinned by digest.
+- [x] **Complete — 2026-09-29:** Migrated Immich's database from PostgreSQL **14.17** to **18.2** using `ghcr.io/immich-app/postgres:18-vectorchord0.5.3-pgvector0.8.1`, pinned to manifest digest `sha256:828081a755d3911a2d94f0a2be9f98570c07d52cf080fd310a9d6e4b83b73aa5`. Immich server remained at version **3.2.4**.
 
-**Suggested fix:** Review the installed Immich release and its database upgrade instructions. Update through an Immich-supported image and extension combination, and plan the major-version transition before the support deadline. Preserve the intentional image pin until a tested replacement is chosen; do not substitute a generic PostgreSQL image.
+**Migration:** Stopped Immich writes, made a checked custom-format PostgreSQL 14 dump, initialized a separate PostgreSQL 18 data directory, and restored the dump in a single transaction before cutover. PostgreSQL 18 now mounts `./postgres18` at `/var/lib/postgresql` to match its version-specific data path. The PostgreSQL 14 directory `./postgres` remains intact. Updated Komodo's **saved** Compose contents and environment through its API, then deployed the stack; a future Komodo redeploy retains the new image and path. See [Immich upgrading](https://docs.immich.app/install/upgrading/), [Immich backup and restore](https://docs.immich.app/administration/backup-and-restore/), and the [PostgreSQL 18 container data-path change](https://github.com/docker-library/docs/blob/master/postgres/content.md).
 
-- [ ] **Done when:** The supported update path is documented, a restore is tested, and the selected Immich/database combination receives current fixes.
+**Verification:** The restore completed without errors. The restored database had the same 71 application tables and matching sample table counts. The live database reports VectorChord **0.5.3**, pgvector **0.8.1**, zero invalid indexes, and zero reported checksum failures. Immich server, machine learning, Redis, and PostgreSQL are healthy; the server ping and version APIs returned HTTP 200. Komodo readback matches the saved image and data path. No media files were changed.
+
+**Recovery:** A private database dump, checksum, before/after Komodo configuration snapshots, and rollback notes are stored under `/home/trappserver/immich-pg18-migration/`. This dump covers database metadata, not photos or videos; retain separate media backups. Reverting to the preserved PostgreSQL 14 directory would discard changes made after this cutover, so keep it only as a short-term rollback source. The database backup was restored and verified; a full disaster-recovery restore of media and database together remains part of item 07.
 
 ### 07. Prove backup coverage and restores
 
