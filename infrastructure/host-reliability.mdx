@@ -1,0 +1,108 @@
+---
+title: "Backups, power, and storage"
+description: "CrashPlan, CyberPower UPS management, SMART monitoring, and mounted media disks."
+icon: "hard-drive"
+---
+
+This reference records the backup, power, disk monitoring, and storage services observed on **2026-09-28**. These run directly on the Ubuntu host. See [Native host services](/services/host) for the service inventory and [Plex](/services/plex) for library and database locations.
+
+## CrashPlan
+
+CrashPlan **12.0.0** is installed at `/usr/local/crashplan`. The enabled `crashplan.service` uses `/etc/systemd/system/crashplan.service` and starts `/usr/local/crashplan/bin/service.sh`. A root-owned `CrashPlanServic` process was present in the service's cgroup.
+
+The unit reported `MainPID=0` despite the running engine. Check both the unit and its processes before treating that field as a failure:
+
+```bash
+systemctl status crashplan.service --no-pager
+ps -eo pid,user,comm,cgroup | rg 'CrashPlan|crashplan'
+journalctl -u crashplan.service -n 100 --no-pager
+```
+
+| Path | Purpose observed |
+| --- | --- |
+| `/usr/local/crashplan/conf` | Configuration directory; contents require additional permissions |
+| `/usr/local/crashplan/log` | Contains service, history, and backup log files |
+| `/usr/local/crashplan/cache` | Application cache directory |
+| `/usr/local/crashplan/cp-version` | Installed version information |
+
+The backup selections, destination, latest successful backup, retention, and restore history were not accessible in this inspection. Confirm them in the CrashPlan app before relying on it to protect Plex metadata, application configurations, or the media disks. A running engine alone does not establish backup coverage.
+
+Use the official [service restart instructions](https://support.crashplan.com/hc/en-us/articles/8971613609997-Restarting-the-CrashPlan-app-service) and [log reference](https://support.crashplan.com/hc/en-us/articles/8959806429325-Read-CrashPlan-app-log-files) when troubleshooting. No restart or backup selection changes were made.
+
+## UPS power management
+
+CyberPower PowerPanel for Linux **1.4.1** is installed. `pwrstatd.service` is enabled and running, with a unit at `/etc/systemd/system/pwrstatd.service` and the startup script `/etc/init.d/pwrstatd`.
+
+Selected values read from `/etc/pwrstatd.conf`:
+
+| Configuration key | Value |
+| --- | --- |
+| `powerfail-delay` | `60` |
+| `powerfail-active` | `yes` |
+| `powerfail-duration` | `0` |
+| `powerfail-shutdown` | `yes` |
+| `lowbatt-threshold` | `35` |
+| `runtime-threshold` | `300` |
+| `lowbatt-active` | `yes` |
+| `lowbatt-duration` | `0` |
+| `lowbatt-shutdown` | `yes` |
+| `shutdown-sustain` | `600` |
+| `turn-ups-off` | `yes` |
+| `ups-polling-rate` | `3` |
+| `enable-alarm` | `no` |
+| `hibernate` | `no` |
+| `cloud-active` | `no` |
+
+These are configuration values, not a tested power-failure sequence. The installed configuration enables shutdown actions for power failure and low battery. The UPS model, current charge, estimated runtime, and actual shutdown behavior remain unverified because the status command required additional permissions.
+
+An administrator can check:
+
+```bash
+systemctl status pwrstatd.service --no-pager
+sudo pwrstat -status
+journalctl -u pwrstatd.service -n 100 --no-pager
+```
+
+Refer to [PowerPanel for Linux](https://www.cyberpowersystems.com/product/software/power-panel-personal/powerpanel-personal-linux/) and its [1.4.1 manual](https://dl4jz3rbrsfum.cloudfront.net/documents/CyberPower_FG_PPP-Linux-v1.4.1.pdf) before changing the timing or thresholds.
+
+## Disk monitoring
+
+`smartmontools.service` is enabled and running, using `/usr/sbin/smartd`. The installed package is **7.4-2build1**. The active `DEVICESCAN` entry in `/etc/smartd.conf` provides the configured scan target.
+
+This confirms the monitoring daemon and configuration, but disk SMART health, self-test results, and alert delivery were not checked. The Caddy `scrutiny.ryantr.app` route does not by itself establish a running Scrutiny application.
+
+```bash
+systemctl status smartmontools.service --no-pager
+journalctl -u smartmontools.service -n 100 --no-pager
+lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINTS
+```
+
+## Mounted storage
+
+The root filesystem uses an ext4 LVM volume on `nvme0n1`. The drive was reported as 465.8G, with separate EFI and boot partitions and a 462.7G root volume.
+
+The following data filesystems were mounted. Sizes are the approximate values reported by `lsblk`; directory names are historical labels.
+
+| Device at inspection | Size | Filesystem | Mount point |
+| --- | --- | --- | --- |
+| `sda1` | 10.9T | ext4 | `/media/internal/twelveTb` |
+| `sdb1` | 3.6T | ext4 | `/media/internal/fourTbRed` |
+| `sdc1` | 2.7T | ext4 | `/media/internal/threeTB` |
+| `sdd1` | 5.5T | ext4 | `/media/internal/sixTb` |
+| `sde1` | 2.7T | ext4 | `/media/internal/redThrees/walleye` |
+| `sdg1` | 2.7T | ext4 | `/media/internal/redThrees/pike` |
+| `sdh1` | 1.8T | ext3 | `/media/internal/twoTB` |
+| `sdi1` | 3.6T | ext4 | `/media/internal/fourTb` |
+| `sdj1` | 12.7T | ext4 | `/media/internal/fourteenTB` |
+
+`sdf1` was a 1.8T ext4 partition without a mount point; its contents and intended use were not inspected. `sdf5` was a swap partition.
+
+Device letters can change across boots. Check filesystem identities and mount configuration before acting on a disk. A directory named `full_raid_backup` is present under `fourteenTB`; its name does not establish the current RAID topology or backup freshness.
+
+Plex has one configured movie root under `/media/internal/fourteenTb/movies` that did not exist. The mounted directory uses `fourteenTB`. See the [Plex library reference](/services/plex) before correcting the library path.
+
+## Recovery checks
+
+Before an application upgrade or storage change, confirm the application-specific backup, its destination, and a usable restore. Include the native Plex data directory and any host configuration that is required to reconstruct services. Keep media files separate from configuration and database backup planning.
+
+For a host outage, check UPS status and disk mounts before restarting applications. Then verify Plex library access, CrashPlan backup activity, Docker application health, and off-host services independently. See [Service operations](/operations/services).

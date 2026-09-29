@@ -14,7 +14,7 @@ Maintainerr, MeTube, Czkawka, and iSponsorBlockTV have no Compose labels. Their 
 
 Caddy routes `ombi.ryantr.app` publicly. It guards `radarr`, `sonarr`, `sab`, `watcharr`, and `maintainerr` under `.ryantr.app` for LAN access. Routes and service details appear below.
 
-Plex is not in the running Docker inventory. Tautulli and Maintainerr may integrate with Plex, but their application configuration was not inspected.
+[Plex Media Server](/services/plex) runs directly on Ubuntu as `plexmediaserver.service` and responds at `192.168.1.236:32400`. Its dedicated reference documents the Movies, TV Shows, and Photos library roots, metadata, and maintenance. Tautulli and Maintainerr may integrate with Plex, but their application configuration was not inspected.
 
 ## Port mappings to verify
 

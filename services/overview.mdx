@@ -1,12 +1,23 @@
 ---
 title: "Service inventory"
-description: "All running containers, Komodo stacks, access paths, and follow-up checks for Trappserver."
+description: "Running Docker applications, native host services, and off-host infrastructure in the Trappserver homelab."
 icon: "layer-group"
 ---
 
 The Docker host at `192.168.1.236` had **44 running containers** in the **2026-09-28** inspection. Fourteen reported healthy; thirty had no Docker healthcheck. None reported unhealthy at that moment.
 
 Komodo's read-only API identifies one server, **Local**, and nine running managed stacks containing twenty of those containers. The other twenty-four belong to the management plane, older Compose projects, or standalone deployments.
+
+## Native and off-host services
+
+The homelab also includes services outside Docker, verified on **2026-09-28**:
+
+| Area | Reference |
+| --- | --- |
+| Native Plex Media Server, three libraries, and metadata | [Plex](/services/plex) |
+| Host dynamic DNS, SSH, Fail2Ban, remote desktop, and scheduling | [Native host services](/services/host) |
+| CrashPlan, CyberPower UPS, SMART monitoring, and mounted disks | [Backups, power, and storage](/infrastructure/host-reliability) |
+| Home Assistant, SMLIGHT coordinator, and six adopted UniFi devices | [Homelab devices](/infrastructure/devices) |
 
 ## Browse by purpose
 
@@ -114,7 +125,8 @@ A container without Compose labels has an unknown original deployment source unt
 - Tandoor's database location was not established.
 - Blocky is still running during the migration to gateway DNS.
 - Watchtower's update scope and schedule, and application backup coverage, were not verified.
-- Caddy also contains routes for `ninja`, `scrutiny`, Home Assistant, and UniFi that were not matched to running containers on this host. They may run elsewhere or outside Docker.
+- Home Assistant and UniFi are verified off-host endpoints; see [Homelab devices](/infrastructure/devices). Caddy's `ninja` and `scrutiny` routes remain unmatched to a confirmed application.
+- Plex has one configured movie directory that did not exist at inspection. See [Plex](/services/plex). CrashPlan backup selections and successful restore coverage remain unverified.
 
 ## Inventory boundaries
 
