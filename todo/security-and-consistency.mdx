@@ -4,7 +4,7 @@ description: "Prioritized homelab fixes, observed evidence, and completion check
 icon: "list-check"
 ---
 
-This is a work list from a **read-only review on 2026-09-29**, supplemented by the infrastructure references checked on 2026-09-28. No remediation was performed. Work through one item at a time and record the result after verifying it.
+This is a work list from a **read-only review on 2026-09-29**, supplemented by the infrastructure references checked on 2026-09-28. The initial review made no changes. Completed items below record subsequent remediation and verification. Work through one item at a time.
 
 **Scope:** Docker runtime settings, selected readable deployment files, credential file permissions, host listeners, database versions, and existing homelab documentation. Router rules, internet reachability, effective application passwords, backup restores, and a full vulnerability scan were not tested. A port bound to every interface is a confirmed configuration finding; it does not by itself prove internet exposure.
 
@@ -32,11 +32,34 @@ Before a change, identify the owning deployment, record the current version/conf
 
 ### 02. Restrict direct management and application ports
 
-**Evidence — confirmed bindings; reachability needs verification:** Komodo, Portainer, InfluxDB, Uptime Kuma, Homelable, and both MCP services publish ports on `0.0.0.0` and `::`. Many application ports do too. Caddy's `internal-only` rule applies only to requests through Caddy; direct ports bypass that rule.
+- [x] **Complete — 2026-09-29:** Implemented the requested scope: remote direct access to applications marked `internal-only` in Caddy is restricted to **192.168.1.0/24**. Host loopback and server-local Docker bridge integrations remain trusted. Other TODO items were not remediated.
 
-**Suggested fix:** Classify each listener as public, trusted LAN/VPN, container-only, or proxy-only. For services reached only through host-networked Caddy, consider loopback port bindings. Keep necessary LAN services on an intended interface and apply tested firewall rules. Review IPv6 separately and check router forwards and tunnel routes. Docker's rules can interact with host firewall tools, so verify access from clients rather than relying on an assumed UFW policy. See [Docker port publishing](https://docs.docker.com/engine/network/port-publishing/) and [Docker firewall behavior](https://docs.docker.com/engine/network/packet-filtering-firewalls/).
+**Protected direct TCP ports:**
 
-- [ ] **Done when:** A trusted client can reach intended services, an untrusted network cannot reach management ports directly, and public apps work through the approved ingress path on both address families.
+| Application | Host ports |
+| --- | --- |
+| Watcharr | 3080 |
+| Radarr | 7878 |
+| SABnzbd | 8282 |
+| Sonarr | 8112 |
+| Homebridge | 8581 |
+| Komodo | 9120 |
+| Portainer, including agent/tunnel access | 8000, 9000, 9443 |
+| Scrutiny | 8081 |
+| Maintainerr | 6246 |
+| UniFi gateway | 80, 443 on 192.168.1.1 |
+
+**Host implementation:** Root-owned `/usr/local/sbin/homelab-internal-ports` installs IPv4 and IPv6 rules in dedicated chains. `INPUT` protects native/host-network listeners and Docker's `DOCKER-USER` protects forwarded published ports. Conntrack matches the original host port after Docker DNAT, so mappings such as SAB's host `8282` to container `8080` are covered. Direct routing from non-LAN sources to private Docker container addresses is also restricted. Docker's own rules are preserved; UFW was not enabled or changed. See [Docker's recommended firewall integration](https://docs.docker.com/engine/network/firewall-iptables/).
+
+**Persistence:** `homelab-internal-ports.service` is enabled and active. `/etc/systemd/system/docker.service.d/lan-port-access.conf` requires the policy to run before Docker. No production container restart was needed. Remote IPv6 access to the protected direct ports is blocked because Caddy currently defines only an IPv4 LAN. Update both policies before introducing an IPv6 LAN.
+
+**Gateway implementation:** UniFi policy `6abbdea53f39a091c770be88`, **LAN-only UniFi management: block VPN**, blocks VPN → Gateway TCP `80,443`, always on, for both address families. LAN access is preserved; existing External, Hotspot, and DMZ default gateway blocks remain. The firewall snapshot comparison confirmed exactly one new policy with no changes to existing policies, zones, or groups. Readback places the new rule at index `10000`, before the predefined allow at `2147483647`. The separate ordering API returned 401; no reordering was performed.
+
+**Verification:** Temporary network namespace probes showed all eleven host ports blocked from non-LAN IPv4 and IPv6 sources. A simulated LAN source reached all ten running ports. Packet counters confirmed both the native INPUT and IPv4 Docker DNAT forwarding paths were exercised. Public HTTPS returned 200 on both address families, and active internal Caddy routes remained available. Test containers, links, and routes were removed.
+
+**Limitations:** Scrutiny already has no listening upstream: direct port `8081` refuses LAN connections and its Caddy route returns 502. This remains for item 18. Boot dependency ordering was checked, but a production reboot was not performed. Gateway verification used configuration readback; an actual VPN/WAN client test was not available. Services outside Caddy's `internal-only` set, including the separate MCP listeners, were outside this requested change.
+
+**Maintenance and rollback:** Implementation, verification results, and before/after snapshots are under `/home/trappserver/Documents/caddy_v2/internal-port-access/`; use its `README.md`. Reload the host policy with `sudo systemctl reload homelab-internal-ports.service`. The script's `remove` command removes only its own rules; disable boot installation and remove the Docker drop-in when rolling back permanently. Roll back UniFi by disabling or removing only the named policy. Avoid restoring an old full firewall snapshot over current Docker rules.
 
 ### 03. Treat Docker management and MCP tools as privileged access
 
