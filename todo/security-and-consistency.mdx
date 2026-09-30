@@ -30,7 +30,7 @@ Before a change, identify the owning deployment, record the current version/conf
 
 - [ ] **Done when:** Only intended accounts can read credential-bearing files, replaced credentials are revoked, deployments still authenticate, and the next Komodo refresh does not recreate the exposure.
 
-### 02. Restrict direct management and application ports
+### 02. Restrict direct management and application ports (Completed)
 
 - [x] **Complete — 2026-09-29:** Implemented the requested scope: remote direct access to applications marked `internal-only` in Caddy is restricted to **192.168.1.0/24**. Host loopback and server-local Docker bridge integrations remain trusted. Other TODO items were not remediated.
 
@@ -69,7 +69,7 @@ Before a change, identify the owning deployment, record the current version/conf
 
 - [ ] **Done when:** Unauthenticated requests are rejected, each integration has documented permissions, and Docker control is available only to trusted administrators and required services.
 
-### 04. Verify Grafana's effective administrator credential
+### 04. Verify Grafana's effective administrator credential (Completed)
 
 - [x] **Complete — 2026-09-29:** The configured `GF_SECURITY_ADMIN_PASSWORD` placeholder does not authenticate to the running TeslaMate Grafana login. The effective administrator password was changed after the database was initialized, so no credential reset was needed.
 
@@ -81,13 +81,13 @@ Before a change, identify the owning deployment, record the current version/conf
 
 ## P1 — databases and recovery
 
-### 05. Retire TeslaMate's PostgreSQL 13 instance
+### 05. Retire TeslaMate's PostgreSQL 13 instance (Completed)
 
 - [x] **Complete by retirement — 2026-09-30:** TeslaMate's database, Grafana, and Mosquitto containers are stopped. All three have Docker restart policy `no`; their saved Komodo stack uses `restart: "no"` and has automatic updates and update polling disabled. No PostgreSQL major-version migration was performed.
 
 **Recovery limit:** The stopped PostgreSQL 13 data and Grafana volume are retained. PostgreSQL 13 is unsupported; upgrade and test a database restore before putting TeslaMate back into service. See the [PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/).
 
-### 06. Upgrade Immich's PostgreSQL before support ends
+### 06. Upgrade Immich's PostgreSQL before support ends (Completed)
 
 - [x] **Complete — 2026-09-29:** Migrated Immich's database from PostgreSQL **14.17** to **18.2** using `ghcr.io/immich-app/postgres:18-vectorchord0.5.3-pgvector0.8.1`, pinned to manifest digest `sha256:828081a755d3911a2d94f0a2be9f98570c07d52cf080fd310a9d6e4b83b73aa5`. Immich server remained at version **3.2.4**.
 
@@ -109,7 +109,7 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ## P2 — security and operational consistency
 
-### 08. Choose one update owner per service
+### 08. Choose one update owner per service (Completed)
 
 - [x] **Complete — updated 2026-09-30:** Komodo is the update owner for active saved stacks. The retired TeslaMate and Tandoor stacks, and the stopped legacy DokuWiki stack, have automatic updates and update polling disabled. Watchtower was stopped and its restart policy disabled after the remaining applications were imported into Komodo.
 
@@ -149,7 +149,7 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 - [ ] **Done when:** Each writable path and capability has a documented purpose, browsing-only apps cannot modify media/site content, and intended workflows still succeed.
 
-### 13. Add bounded Docker log retention
+### 13. Add bounded Docker log retention (Completed)
 
 - [x] **Complete — 2026-09-30:** Docker's saved daemon default is the compressed `local` driver with `max-size=20m` and `max-file=10` (about 200 MB per container). Live restore is enabled. The daemon configuration passed `dockerd --validate`, Docker restarted, and active containers were recreated through their owning Komodo stacks or the Komodo bootstrap Compose project. The source configuration and rollback copy are under `/home/trappserver/docker-log-retention/`.
 
@@ -157,13 +157,13 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 **Retention limit:** The chosen size-based rotation cannot promise ten calendar days: high-volume containers can rotate sooner, and quiet ones can retain older entries. At the observed MongoDB rate its 2 GB cap is roughly twelve days, but this varies. No host journald retention change was made. Disk alert delivery still needs testing under item 15. See [Docker logging drivers](https://docs.docker.com/engine/logging/configure/) and [the local driver](https://docs.docker.com/engine/logging/drivers/local/).
 
-### 14. Improve rankings recovery and health reporting
+### 14. Improve rankings recovery and health reporting (Completed)
 
 - [x] **Complete — 2026-09-30:** The rankings app now uses `restart: unless-stopped` and a Docker health check that calls its database-aware `/health` route every 30 seconds. MongoDB remains a healthy dependency. A controlled app process crash restarted automatically and returned to Docker `healthy`; the HTTPS rankings route returned HTTP 200 after recovery.
 
 **Route reporting:** The enabled `rankings-route-health.timer` checks `https://rankings.ryantr.app/health` through local Caddy every minute using the real hostname and certificate. A stopped app produced a failed check and Caddy HTTP 502; the recovered route produced a successful systemd check. Unit source is under `/home/trappserver/rankings-monitor/`. The host's external DNS path was intermittently unavailable during testing, so this timer checks the local proxy route; it does not prove reachability from the internet. Alert delivery and external monitoring remain part of item 15.
 
-**Build and ownership:** The runtime `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, and `VITE_AUTH0_AUDIENCE` are set to non-placeholder values and appear in the current built browser assets. This verifies build configuration presence, not a live sign-in. The saved Komodo stack uses files-on-host mode with `/etc/komodo/repos/fantasy_rankings/docker-compose.yml`, so a Komodo redeploy retains the change. A clean source commit `d1c3cea` is on local branch `ops/rankings-recovery-health` in `/home/trappserver/rankings-recovery`. GitHub rejected pushing that branch with HTTP 403; automatic approval review also rejected using Komodo's embedded private Git credential to bypass that denial. Push this commit with normal repository write access before returning the stack to Git-backed deployment. A host reboot was not performed.
+**Build and ownership:** The runtime `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, and `VITE_AUTH0_AUDIENCE` are set to non-placeholder values and appear in the current built browser assets. This verifies build configuration presence, not a live sign-in. The source change was merged into the rankings repository's `main` branch at commit `76d6da5`. Komodo is again linked to that repository with automatic pull enabled; its checkout is clean at the merged commit. A Git-backed redeploy retained the app health check and MongoDB log cap, and the app returned to Docker `healthy` with the HTTPS route at HTTP 200. A host reboot was not performed.
 
 ### 15. Test UPS, disk alerts, and notification delivery
 
@@ -209,7 +209,7 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 See [Plex library roots](/services/plex#library-roots).
 
-### 20. Resolve Tandoor and TeslaMate dependency gaps
+### 20. Resolve Tandoor and TeslaMate dependency gaps (Completed)
 
 - [x] **Complete by retirement — 2026-09-30:** Tandoor and TeslaMate are no longer active services. Tandoor was still running at the start of this work despite the earlier stop request; it was stopped and its Docker restart policy changed to `no`. TeslaMate's database, Grafana, and Mosquitto containers are stopped with restart policy `no`. Both saved Komodo stacks use `restart: "no"` and have automatic updates and update polling disabled. Their persistent data and stack definitions remain for recovery.
 
