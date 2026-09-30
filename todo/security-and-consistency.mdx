@@ -183,13 +183,15 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ## P3 — inconsistencies and cleanup
 
-### 17. Correct Homelable's internal backend port
+### 17. Correct Homelable's internal backend port (Completed)
 
-**Evidence — confirmed mismatch; functional impact needs verification:** Homelable publishes backend host port `8002` to container port `8000`, but MCP's `BACKEND_URL` is `http://backend:8002`. Compose service-to-service traffic should use the backend's listening container port.
+- [x] **Complete — 2026-09-30:** Changed MCP's `BACKEND_URL` from `http://backend:8002` to `http://backend:8000` in the local Compose source and Komodo's saved Homelable stack, then deployed the stack. The backend still publishes host port `8002` for host access; MCP now uses the listening container port through service DNS.
 
-**Suggested fix:** Verify the backend listener, then change the source configuration to `http://backend:8000` if it is the intended endpoint. Review allowed browser origins separately; do not broaden CORS to hide the problem.
+**Verification:** The backend's Uvicorn command listens on `0.0.0.0:8000`. Before the change, `backend:8002` refused connections from the MCP container. After deployment, that container fetched the backend OpenAPI endpoint over `backend:8000` with HTTP 200, and an authenticated MCP `list_node_summaries` call completed without error. The frontend returned HTTP 200 on host port `3002`; backend and MCP health endpoints returned HTTP 200. A CORS preflight from the configured `https://label.ryantr.app` origin was allowed. The backend retained the `homelable_backend_data` volume.
 
-- [ ] **Done when:** MCP can read the backend through service DNS, browser access works from approved origins, and no dependency on the host port remains.
+**Rollback:** The previous private Komodo stack configuration is stored at `/home/trappserver/komodo-migration/snapshots/homelable-before-backend-port-20260930T192325Z.json`. Restore the previous `file_contents` through Komodo's UpdateStack API or editor and redeploy only if rollback is needed.
+
+**Limit:** Browser sign-in was not exercised. The `label.ryantr.app` hostname does not currently resolve on this host, and a local Caddy probe for that hostname returned 404; this checklist's management reference does not list a Caddy route for Homelable. The port fix did not change routing or CORS settings.
 
 ### 18. Reconcile proxy routes, redirects, and DNS updaters
 
