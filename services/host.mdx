@@ -33,9 +33,9 @@ This daemon is independent of the Docker cloudflare-ddns stack described in [Net
 
 TCP 22 was listening on IPv4 and IPv6. The SSH service was running with a disabled unit-file state, while ssh.socket was active and enabled. Socket activation explains why SSH is available with the service itself disabled.
 
-The OpenSSH package is **1:9.6p1-3ubuntu13.19**. A local drop-in configures key-based authentication and disables password authentication. The full effective configuration and root-login policy were not checked.
+The OpenSSH package is **1:9.6p1-3ubuntu13.19**. On **2026-09-30**, the effective server configuration was evaluated for `trappserver` and `ai-agent` using a temporary test host key. Ordinary users have password and public-key authentication enabled, keyboard-interactive authentication disabled, and root password login prohibited (`PermitRootLogin prohibit-password`, reported as `without-password`). The local drop-in requires a public key and disables password authentication and forwarding for `ai-agent` only. The live daemon was not reconfigured during this check.
 
-Fail2Ban **1.0.2-3ubuntu0.1** is running. The distro configuration enables the SSH jail. Local defaults specify a 10-minute ban interval, 10-minute observation interval, and five retries. Live jail and ban state were not queried.
+Fail2Ban **1.0.2-3ubuntu0.1** is running. Its resolved on-disk configuration includes the SSH jail with a 10-minute ban interval, 10-minute observation interval, and five retries. The live jail and ban state could not be read without root access. See [host listeners and network separation](/todo/security-and-consistency#16-review-host-listeners-and-network-separation) for the remaining policy review.
 
 ## Desktop services
 

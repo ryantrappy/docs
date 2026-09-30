@@ -35,6 +35,8 @@ Six adopted UniFi devices were reported online:
 
 The gateway's LAN address comes from the configured controller endpoint. Public WAN addresses and hardware identifiers are omitted.
 
+A **2026-09-30** UniFi configuration review found one corporate LAN (`192.168.1.0/24`), one enabled SSID mapped to it, and a WireGuard remote-user network (`192.168.2.0/24`). No separate guest or IoT LAN/VLAN was listed. The current setup therefore has no guest/IoT boundary to validate; adding one requires a separate network and client-side access tests. See [host listeners and network separation](/todo/security-and-consistency#16-review-host-listeners-and-network-separation) for the management-access review.
+
 ### Reported wired uplinks
 
 | Downstream device | Parent | Parent port | Link speed |
