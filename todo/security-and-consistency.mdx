@@ -81,13 +81,11 @@ Before a change, identify the owning deployment, record the current version/conf
 
 ## P1 — databases and recovery
 
-### 05. Migrate TeslaMate away from PostgreSQL 13
+### 05. Retire TeslaMate's PostgreSQL 13 instance
 
-**Evidence — confirmed runtime:** `teslamate_database_1` reports PostgreSQL **13.23**. PostgreSQL 13 support ended on **2025-11-13**, so this major version no longer receives community fixes. See the [PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/).
+- [x] **Complete by retirement — 2026-09-30:** TeslaMate's database, Grafana, and Mosquitto containers are stopped. All three have Docker restart policy `no`; their saved Komodo stack uses `restart: "no"` and has automatic updates and update polling disabled. No PostgreSQL major-version migration was performed.
 
-**Suggested fix:** Identify the TeslaMate release and its supported database versions. Take an application-consistent backup, prove a restore in isolation, and plan a supported major-version migration. Changing the image tag while reusing an old database directory is not a migration.
-
-- [ ] **Done when:** TeslaMate uses a supported PostgreSQL major version, historical data and dashboards work, and a tested backup plus rollback plan exist.
+**Recovery limit:** The stopped PostgreSQL 13 data and Grafana volume are retained. PostgreSQL 13 is unsupported; upgrade and test a database restore before putting TeslaMate back into service. See the [PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/).
 
 ### 06. Upgrade Immich's PostgreSQL before support ends
 
@@ -113,7 +111,7 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 08. Choose one update owner per service
 
-- [x] **Complete — updated 2026-09-30:** Komodo is the active update owner for all **22** saved stacks. Every stack has `auto_update` and `poll_for_updates` enabled. Watchtower was stopped and its restart policy disabled after the remaining applications were imported into Komodo.
+- [x] **Complete — updated 2026-09-30:** Komodo is the update owner for active saved stacks. The retired TeslaMate and Tandoor stacks, and the stopped legacy DokuWiki stack, have automatic updates and update polling disabled. Watchtower was stopped and its restart policy disabled after the remaining applications were imported into Komodo.
 
 **Ownership:** Komodo owns the five former Portainer projects, Homelable, five independent loose-application stacks, and the two related services added to `arr_stack` and `paperless`. TeslaMate PostgreSQL and Network Optimizer's InfluxDB are listed in their stacks' `auto_update_skip_services`; Paperless already skips its database. Komodo core, periphery, and MongoDB remain an independently bootstrapped exception. Portainer and Watchtower are stopped, with their data and Compose sources retained for rollback. Saved Komodo sources omit Watchtower opt-in labels for future redeployments.
 
@@ -137,7 +135,7 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 11. Review public app authentication and ingress paths
 
-**Evidence — confirmed proxy classification; effective protection needs verification:** Home Assistant, Ombi, rankings, Invoice Ninja, Tandoor, Paperless, and Immich routes lack Caddy's LAN-only guard. Cloudflared also runs. Router forwards, tunnel destinations, application authentication, and MFA coverage were not audited.
+**Evidence — confirmed proxy classification; effective protection needs verification:** Home Assistant, Ombi, rankings, Invoice Ninja, Paperless, and Immich routes lack Caddy's LAN-only guard. Tandoor is retired, but its old route should be reviewed under item 18. Cloudflared also runs. Router forwards, tunnel destinations, application authentication, and MFA coverage were not audited.
 
 **Suggested fix:** Confirm which apps intentionally accept internet traffic. Verify application authentication and MFA where supported, review tunnel/router destinations, and keep administrative endpoints private. For browser-only private apps, consider an identity-aware access layer; account for mobile clients, webhooks, and APIs before adding one. Test Caddy's peer-address guard against each actual ingress path instead of assuming forwarded headers or a tunnel preserve the expected source address.
 
@@ -153,19 +151,19 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 13. Add bounded Docker log retention
 
-**Evidence — confirmed:** Most running containers use `json-file` with empty rotation options. The inspected daemon configuration has no logging defaults. Network Optimizer's speed-test container already sets `max-size=10m` and `max-file=3`. Docker's default JSON log size is unlimited. See [Docker JSON logging](https://docs.docker.com/engine/logging/drivers/json-file/).
+- [x] **Complete — 2026-09-30:** Docker's saved daemon default is the compressed `local` driver with `max-size=20m` and `max-file=10` (about 200 MB per container). Live restore is enabled. The daemon configuration passed `dockerd --validate`, Docker restarted, and active containers were recreated through their owning Komodo stacks or the Komodo bootstrap Compose project. The source configuration and rollback copy are under `/home/trappserver/docker-log-retention/`.
 
-**Suggested fix:** Define a retention budget and use rotation settings consistently, either in deployment definitions or daemon defaults. Preserve enough logs for diagnosis. Existing containers need recreation to inherit new daemon defaults; plan that through each owning manager.
+**Exceptions and sizing:** Rankings MongoDB logs at roughly 157 MiB/day, so its saved Compose source sets `local` with `100m` × `20` (about 2 GB). Network Optimizer Speedtest retains its explicit bounded `json-file` rotation of `10m` × `3`. An audit of all **38 running containers** found 37 using `local` and one using that bounded JSON configuration; none had unbounded Docker logs. `docker logs` remains available.
 
-- [ ] **Done when:** Active containers have bounded logs, required diagnostic history remains available, and disk-usage alerts are tested.
+**Retention limit:** The chosen size-based rotation cannot promise ten calendar days: high-volume containers can rotate sooner, and quiet ones can retain older entries. At the observed MongoDB rate its 2 GB cap is roughly twelve days, but this varies. No host journald retention change was made. Disk alert delivery still needs testing under item 15. See [Docker logging drivers](https://docs.docker.com/engine/logging/configure/) and [the local driver](https://docs.docker.com/engine/logging/drivers/local/).
 
 ### 14. Improve rankings recovery and health reporting
 
-**Evidence — confirmed runtime:** `fantasy-rankings-rankings_studio-1` has restart policy `no` and no Docker health check; MongoDB has a restart policy and health check. The app now uses a local image, so the earlier published-image/browser-env mismatch should not be treated as an uncorrected issue without retesting.
+- [x] **Complete — 2026-09-30:** The rankings app now uses `restart: unless-stopped` and a Docker health check that calls its database-aware `/health` route every 30 seconds. MongoDB remains a healthy dependency. A controlled app process crash restarted automatically and returned to Docker `healthy`; the HTTPS rankings route returned HTTP 200 after recovery.
 
-**Suggested fix:** Choose an appropriate app restart policy and add a meaningful readiness/health check. Monitor the browser route separately from process state. Confirm the current build includes the public Auth0 settings and server variables arrive through the existing deployment environment. A health check alone does not automatically restart an unhealthy container.
+**Route reporting:** The enabled `rankings-route-health.timer` checks `https://rankings.ryantr.app/health` through local Caddy every minute using the real hostname and certificate. A stopped app produced a failed check and Caddy HTTP 502; the recovered route produced a successful systemd check. Unit source is under `/home/trappserver/rankings-monitor/`. The host's external DNS path was intermittently unavailable during testing, so this timer checks the local proxy route; it does not prove reachability from the internet. Alert delivery and external monitoring remain part of item 15.
 
-- [ ] **Done when:** The app recovers after a planned restart/reboot, monitoring detects an unavailable route, and sign-in configuration is verified against the current build.
+**Build and ownership:** The runtime `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, and `VITE_AUTH0_AUDIENCE` are set to non-placeholder values and appear in the current built browser assets. This verifies build configuration presence, not a live sign-in. The saved Komodo stack uses files-on-host mode with `/etc/komodo/repos/fantasy_rankings/docker-compose.yml`, so a Komodo redeploy retains the change. A clean source commit `d1c3cea` is on local branch `ops/rankings-recovery-health` in `/home/trappserver/rankings-recovery`. GitHub rejected pushing that branch with HTTP 403; automatic approval review also rejected using Komodo's embedded private Git credential to bypass that denial. Push this commit with normal repository write access before returning the stack to Git-backed deployment. A host reboot was not performed.
 
 ### 15. Test UPS, disk alerts, and notification delivery
 
@@ -211,13 +209,11 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 See [Plex library roots](/services/plex#library-roots).
 
-### 20. Document missing dependencies and deployment sources
+### 20. Resolve Tandoor and TeslaMate dependency gaps
 
-**Evidence — inventory gaps:** Tandoor is running, but its database location is still unverified. TeslaMate's database, MQTT broker, and Grafana run, while no TeslaMate logger container appeared in the current Docker inventory. Some workloads retain Portainer-era Compose labels or no saved Compose label.
+- [x] **Complete by retirement — 2026-09-30:** Tandoor and TeslaMate are no longer active services. Tandoor was still running at the start of this work despite the earlier stop request; it was stopped and its Docker restart policy changed to `no`. TeslaMate's database, Grafana, and Mosquitto containers are stopped with restart policy `no`. Both saved Komodo stacks use `restart: "no"` and have automatic updates and update polling disabled. Their persistent data and stack definitions remain for recovery.
 
-**Suggested fix:** Identify Tandoor's real database and backup method, and establish whether the TeslaMate logger runs elsewhere, is intentionally stopped, or is missing. Record the deployment source and recovery instructions for standalone/legacy containers before any consolidation. Verify data freshness rather than equating a running dashboard with a working collector.
-
-- [ ] **Done when:** Each app's dependencies, persistent data, deployment owner, and recreation procedure are documented, and expected data collection is current.
+**If reactivated:** First identify Tandoor's actual database and backup path. TeslaMate's logger was absent from the Docker inventory, and its PostgreSQL 13 database is unsupported; restore and upgrade in isolation before production use. The broader Komodo migration and remaining source/recovery validation are tracked in item 22. The old Tandoor Caddy route should be reviewed under item 18.
 
 ## Additional planned work
 
