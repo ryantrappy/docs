@@ -4,7 +4,7 @@ description: "Prioritized homelab fixes, observed evidence, and completion check
 icon: "list-check"
 ---
 
-This is a work list from a **read-only review on 2026-09-29**, supplemented by the infrastructure references checked on 2026-09-28. The initial review made no changes. Completed items below record subsequent remediation and verification. Work through one item at a time.
+This checklist began with a **read-only review on 2026-09-29**, supplemented by infrastructure references checked on 2026-09-28. The initial review made no changes. Completed items and migration notes below record subsequent work. Work through one item at a time.
 
 **Scope:** Docker runtime settings, selected readable deployment files, credential file permissions, host listeners, database versions, and existing homelab documentation. Router rules, internet reachability, effective application passwords, backup restores, and a full vulnerability scan were not tested. A port bound to every interface is a confirmed configuration finding; it does not by itself prove internet exposure.
 
@@ -113,13 +113,11 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 08. Choose one update owner per service
 
-- [x] **Complete — 2026-09-30:** Komodo is the update owner for all **11** managed stacks. Its saved `auto_update` and `poll_for_updates` settings are enabled on every stack. Watchtower is now an explicit opt-in updater for **17** running external application containers. Its `--label-enable` setting excludes all **20** running Komodo containers; none carries an enable label. Seven running database or Docker-management containers are manual-update exceptions.
+- [x] **Complete — updated 2026-09-30:** Komodo is the active update owner for all **22** saved stacks. Every stack has `auto_update` and `poll_for_updates` enabled. Watchtower was stopped and its restart policy disabled after the remaining applications were imported into Komodo.
 
-**Durable configuration:** Watchtower runs from `/home/trappserver/Documents/watchtower/compose.yaml` and excludes itself. External application labels live in Homelable's Compose source, five Portainer-owned Compose files, and seven standalone Compose definitions under `/home/trappserver/Documents/standalone-services/`. Portainer-owned database services are explicitly labeled `com.centurylinklabs.watchtower.enable=false` for their next redeployment. Komodo's automatic update settings were changed through its API. Watcharr is the media-watchlist app and remains managed by Komodo; Watchtower is the updater changed here. See [Komodo automatic updates](https://komo.do/docs/deploy/compose) and [Watchtower opt-in selection](https://containrrr.dev/watchtower/container-selection/).
+**Ownership:** Komodo owns the five former Portainer projects, Homelable, five independent loose-application stacks, and the two related services added to `arr_stack` and `paperless`. TeslaMate PostgreSQL and Network Optimizer's InfluxDB are listed in their stacks' `auto_update_skip_services`; Paperless already skips its database. Komodo core, periphery, and MongoDB remain an independently bootstrapped exception. Portainer and Watchtower are stopped, with their data and Compose sources retained for rollback. Saved Komodo sources omit Watchtower opt-in labels for future redeployments.
 
-**Exceptions and limits:** Komodo core, periphery, and MongoDB; Portainer; TeslaMate PostgreSQL; InfluxDB; and Watchtower itself remain manual-update services. Komodo's automatic update setting does not publish new versions of the locally built Caddy/rankings images or change an intentionally pinned image digest; their build or pin changes remain deliberate work. The chosen Komodo policy permits same-tag updates to database images managed in Komodo, so database backup and release review remain important.
-
-**Verification and rollback:** All 44 running containers matched the ownership policy: 20 Komodo excluded, 17 external apps opted in, and seven exceptions excluded. Watchtower and health-checked recreated services were healthy, with zero observed restarts. Blocky answered DNS; Homebridge, Maintainerr, Grafana, and Uptime Kuma returned HTTP 200. Portainer's saved Compose files matched the applied files. Private before snapshots and rollback notes are under `/home/trappserver/watchtower-opt-in/`. Former standalone application containers and the old Watchtower container remain stopped temporarily for rollback; do not start the old Watchtower alongside the new one.
+**Limits:** Some currently running containers still retain historical Watchtower labels until Komodo recreates them; Watchtower is stopped, so it cannot act on those labels. Komodo does not publish new versions of locally built Caddy/rankings images or change intentionally pinned image digests. Review database releases and backups before manual image upgrades. The previous opt-in configuration and rollback notes remain under `/home/trappserver/watchtower-opt-in/`. See [Komodo automatic updates](https://komo.do/docs/deploy/compose).
 
 ### 09. Complete the Blocky transition and reduce its privileges
 
@@ -131,7 +129,7 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 10. Verify certificates on internal upstream connections
 
-**Evidence — confirmed configuration/documentation:** Caddy's Portainer TLS route uses `tls_insecure_skip_verify`. The UniFi upstream has no explicit HTTPS transport. The documented UniFi DNS automation disables controller certificate verification.
+**Evidence — confirmed configuration/documentation:** The UniFi upstream has no explicit HTTPS transport. The documented UniFi DNS automation disables controller certificate verification. Caddy's former Portainer route used `tls_insecure_skip_verify`; that route was removed on 2026-09-30.
 
 **Suggested fix:** Use a certificate and hostname that clients can verify, or trust a suitable private CA in the relevant client. Configure upstream TLS intentionally. Coordinate trust changes with the DNS sync and other integrations so they continue working. Browser-facing Caddy HTTPS does not secure every upstream hop. See [Caddy transport options](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#the-http-transport).
 
@@ -233,11 +231,13 @@ See [Plex library roots](/services/plex#library-roots).
 
 ### 22. Move remaining Portainer and loose containers into Komodo stacks
 
-**Why:** Portainer-owned Compose stacks and standalone containers still sit outside Komodo. Their deployment sources and recreation steps are split across managers, which complicates reviewed updates and recovery.
+**Migration performed — 2026-09-30:** Imported all five active Portainer Compose projects into Komodo: TeslaMate (database, Grafana, Mosquitto), Tandoor, Uptime Kuma, Network Optimizer (including InfluxDB and Speedtest), and qBittorrent. Added independent Komodo stacks for Blocky, Duplicate Finder, Homebridge, MeTube, YouTube Blocker, and Homelable. Moved Maintainerr into `arr_stack` and Paperless AI into `paperless`, preserving their bind-mounted data. Komodo now has **22** saved stacks. Portainer and Watchtower are stopped with restart disabled; their containers and data remain available for rollback.
 
-**Suggested fix:** Inventory each remaining Portainer stack and standalone container, including mounts, environment, networks, ports, credentials, database dependencies, and existing backup paths. Import one workload at a time as a Komodo Stack, preserving its project name and persistent data. Test restore and service behavior before retiring the old manager entry. Plan Komodo core, periphery, and MongoDB as a bootstrap exception or give them an independent recovery path so Komodo can be rebuilt when it is unavailable. Reconcile Watchtower labels as ownership changes.
+**Verification:** Komodo's service list found every application container. Each imported project was deployed once with Compose `--no-recreate`; Komodo recorded the project and services while their container IDs stayed unchanged. Maintainerr and Paperless AI were recreated by their new stacks and are running with their original data mounts. All application containers were running and none reported an unhealthy Docker health check after migration. The only running containers outside Komodo are Komodo core, periphery, and MongoDB, deployed from `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml` as the independent bootstrap path. Private Portainer Compose source copies and migration snapshots are under `/home/trappserver/komodo-migration/`.
 
-- [ ] **Done when:** Every eligible workload has a saved Komodo source, tested recreation and rollback, one update owner, and no duplicate active deployment; any bootstrap exception has a documented external recovery method.
+**Remaining validation:** A clean recreation and rollback have not been exercised for every imported service, especially TeslaMate PostgreSQL, InfluxDB, and Homelable. The inactive historical Portainer definitions were retained in a private archive and the stopped Portainer data volume; do not deploy them without checking their current relevance. Portainer's two Caddy routes were removed and returned HTTP 404; Komodo still returned HTTP 200 through Caddy. Coordinate full data restore tests with item 07.
+
+- [ ] **Done when:** Each imported service has a verified clean recreation or recovery test; retain the independent Komodo bootstrap and rollback archive until recovery is proven.
 
 ## Track progress
 

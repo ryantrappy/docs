@@ -10,7 +10,7 @@ Use this checklist to get oriented on Trappserver before changing a service.
 
 The Docker host is `192.168.1.236` on `192.168.1.0/24`. UniFi at `192.168.1.1` supplies the primary LAN DNS described in the migration notes.
 
-Open [Komodo](https://komodo.ryantr.app) to review managed stacks. [Portainer](https://port.ryantr.app) is also present for older deployments. Sign in using your existing account.
+Open [Komodo](https://komodo.ryantr.app) to review and change application stacks. Portainer is stopped; its data is retained only for rollback. Sign in using your existing account.
 
 For terminal work, use your existing authenticated session on the host. The inspection commands below require Docker access.
 
@@ -41,7 +41,7 @@ Check [Backups, power, and storage](/infrastructure/host-reliability) for media 
 
 Read the service page before editing. It lists Compose project labels, published ports, restart policy, and mounts.
 
-Komodo-managed stacks commonly use generated Compose files under `/etc/komodo/stacks`. The rankings application uses a linked repository under `/etc/komodo/repos`. Older projects show `/data/compose/...` labels. Standalone containers may have no Compose labels.
+Komodo-managed stacks commonly use generated Compose files under `/etc/komodo/stacks`. The rankings application uses a linked repository under `/etc/komodo/repos`. Imported projects can still show historical `/data/compose/...` labels on containers that have not been recreated. Use the saved Komodo Stack as their current deployment source. Komodo core, periphery, and MongoDB retain an independent bootstrap Compose file.
 
 Use the existing deployment manager and its stored environment settings when recreating a service. An ad hoc Compose invocation can select a different project or omit credentials.
 

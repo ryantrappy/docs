@@ -111,13 +111,11 @@ The guard checks the directly connected peer's address. It aborts connections ou
 | `sonarr` | `127.0.0.1:8112` |
 | `homebridge` | `127.0.0.1:8581` |
 | `komodo` | `127.0.0.1:9120` |
-| `portainer` | `127.0.0.1:9000` |
-| `port` | `127.0.0.1:9443`, with upstream TLS and certificate verification disabled |
 | `scrutiny` | `127.0.0.1:8081` |
 | `maintainerr` | `127.0.0.1:6246` |
 | `unifi` | `192.168.1.1`, with no explicit upstream TLS transport |
 
-The `port` route's `tls_insecure_skip_verify` setting applies to Caddy's connection to its upstream. Browser-facing TLS still uses Caddy's domain certificate. See the [reverse proxy transport reference](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#the-http-transport).
+The Portainer `portainer` and `port` routes were removed on 2026-09-30 after the manager was stopped. Both hostnames now reach Caddy's unmatched-hostname `404` response.
 
 ### Static sites and fallback behavior
 

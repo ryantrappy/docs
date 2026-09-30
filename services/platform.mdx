@@ -4,7 +4,7 @@ description: "Running containers, access, storage, and maintenance for managemen
 icon: "gear"
 ---
 
-Komodo is the primary container management interface. Portainer and older Compose projects are also present. This reference was checked on **2026-09-28**.
+Komodo is the active container management interface. All application Compose projects were imported by **2026-09-30**. Portainer and Watchtower are stopped with restart disabled; their data is retained for rollback. The detailed container settings below are a **2026-09-28 historical snapshot** unless noted otherwise.
 
 ## Management plane
 
@@ -18,7 +18,7 @@ The separate Komodo MCP stack publishes host port 8003. The project supports a S
 
 ## Other management and monitoring tools
 
-[Portainer](https://portainer.ryantr.app) and its [HTTPS upstream route](https://port.ryantr.app) are LAN-only Caddy routes. The older `/data/compose/...` labels in the inventory identify Portainer-era project locations, which may belong to Portainer's environment rather than directly accessible host paths.
+Portainer's two Caddy routes were removed after the manager was stopped. The older `/data/compose/...` labels in the inventory identify the source used when containers were last created; current definitions are saved in Komodo. The private Portainer archive is under `/home/trappserver/komodo-migration/portainer-archive/`.
 
 Uptime Kuma publishes host port 3001 and stores state in `/home/trappserver/Documents/uptime_kuma`. Configured monitors and notifications were not inspected.
 
@@ -30,7 +30,7 @@ No Caddy hostnames for Kuma, Homelable, or the Komodo MCP server were found.
 
 Retain Komodo's MongoDB volumes, keys volume, Core configuration, and backup directory. A backup directory mount does not prove that a backup is scheduled or restorable.
 
-Watchtower is running with the Docker socket mounted. Its update scope, schedule, and monitor-only behavior were not established. Review its settings when coordinating Komodo updates.
+Watchtower was stopped after Komodo took ownership of all application projects. Komodo core, periphery, and MongoDB remain outside Komodo under their independent bootstrap Compose file.
 
 Use [Service operations](/operations/services) for the maintenance workflow.
 
@@ -123,7 +123,7 @@ Mounts:
 
 ### portainer
 
-Container administration interface.
+Former container administration interface; stopped on 2026-09-30. The settings below are from the 2026-09-28 snapshot.
 
 | Setting | Observed value |
 | --- | --- |
@@ -133,7 +133,7 @@ Container administration interface.
 | Host → container ports | `8000 → 8000/tcp`, `9000 → 9000/tcp`, `9443 → 9443/tcp` |
 | Restart policy | `always` |
 | Docker health | No healthcheck configured |
-| Caddy route | [port.ryantr.app](https://port.ryantr.app) |
+| Caddy route | Removed on 2026-09-30 |
 
 Mounts:
 

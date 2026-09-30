@@ -6,7 +6,7 @@ icon: "layer-group"
 
 The Docker host at `192.168.1.236` had **44 running containers** in the **2026-09-28** inspection. Fourteen reported healthy; thirty had no Docker healthcheck. None reported unhealthy at that moment.
 
-Komodo's read-only API identifies one server, **Local**, and nine running managed stacks containing twenty of those containers. The other twenty-four belong to the management plane, older Compose projects, or standalone deployments.
+**Ownership update — 2026-09-30:** Komodo now has **22 saved stacks**, including **20 running application stacks** covering **39 application containers**. The other three running containers are Komodo core, periphery, and MongoDB, kept on an independent bootstrap Compose file. Portainer and Watchtower are stopped. The detailed container table below remains a dated 2026-09-28 snapshot; use Docker and Komodo for current runtime status.
 
 ## Native and off-host services
 
@@ -32,27 +32,38 @@ The homelab also includes services outside Docker, verified on **2026-09-28**:
 
 Each reference lists container names, image tags, networks, actual port mappings, restart policy, and persistent mounts. The [Caddy page](/infrastructure/caddy) explains route protection and DNS.
 
-## Confirmed Komodo stacks
+## Komodo stacks after migration
 
-| Stack | Running containers | Deployment location |
+| Stack | Running containers | Source |
 | --- | --- | --- |
-| `arr_stack` | 6 | `/etc/komodo/stacks/arr_stack/compose.yaml` |
-| `caddy-v2` | 1 | `/etc/komodo/stacks/caddy-v2/compose.yaml` |
-| `cloudflare-ddns` | 1 | `/etc/komodo/stacks/cloudflare-ddns/compose.yaml` |
-| `cloudflared` | 1 | `/etc/komodo/stacks/cloudflared/compose.yaml` |
-| `fantasy-rankings` | 2 | `/etc/komodo/repos/fantasy_rankings/docker-compose.yml` |
-| `immich` | 4 | `/etc/komodo/stacks/immich/compose.yaml` |
-| `komodo-mcp` | 1 | `/etc/komodo/stacks/komodo-mcp/compose.yaml` |
-| `paperless` | 3 | `/etc/komodo/stacks/paperless/compose.yaml` |
-| `watcharr` | 1 | `/etc/komodo/stacks/watcharr/compose.yaml` |
+| `arr_stack` | 7 | Saved Komodo Compose, including Maintainerr |
+| `blocky` | 1 | Saved Komodo Compose |
+| `caddy-v2` | 1 | Saved Komodo Compose |
+| `cloudflare-ddns` | 1 | Saved Komodo Compose |
+| `cloudflared` | 1 | Saved Komodo Compose |
+| `duplicate-finder` | 1 | Saved Komodo Compose |
+| `fantasy-rankings` | 2 | Linked repository |
+| `homebridge` | 1 | Saved Komodo Compose |
+| `homelable` | 3 | Saved Komodo Compose |
+| `immich` | 4 | Saved Komodo Compose |
+| `komodo-mcp` | 1 | Saved Komodo Compose |
+| `metube` | 1 | Saved Komodo Compose |
+| `network-optimizer` | 3 | Saved Komodo Compose |
+| `paperless` | 4 | Saved Komodo Compose, including Paperless AI |
+| `qbittorrent` | 1 | Saved Komodo Compose |
+| `tandoor` | 1 | Saved Komodo Compose |
+| `teslamate` | 3 | Saved Komodo Compose |
+| `uptime-kuma` | 1 | Saved Komodo Compose |
+| `watcharr` | 1 | Saved Komodo Compose |
+| `youtube-blocker` | 1 | Saved Komodo Compose |
+| `caddy` | 0 | Stopped legacy Komodo stack |
+| `dokuwiki` | 0 | Stopped legacy Komodo stack |
 
-Komodo reports no standalone Deployment resources. This does not mean there are no standalone Docker containers: several are present below without Compose labels.
+Komodo core, periphery, and MongoDB use `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml` as an independent bootstrap path. The active proxy is `caddy-v2`. See the [migration record](/todo/security-and-consistency#22-move-remaining-portainer-and-loose-containers-into-komodo-stacks).
 
-The older `caddy` and `dokuwiki` Komodo stacks are stopped. The active proxy is `caddy-v2`.
+## 2026-09-28 container snapshot
 
-## All running containers
-
-"Caddy route" describes the configured access path, not an availability test. A host-published port is bound on all host interfaces in this snapshot; LAN guards in Caddy do not apply to direct connections to those ports.
+This table predates the 2026-09-30 ownership migration. Portainer and Watchtower are now stopped; Maintainerr and Paperless AI now belong to their related Komodo projects; the loose applications now have saved Komodo stacks. "Caddy route" describes the configured access path, not an availability test. A host-published port was bound on all host interfaces in this snapshot; LAN guards in Caddy do not apply to direct connections to those ports.
 
 | Container | Project | Configured Caddy access | Reference |
 | --- | --- | --- | --- |
@@ -103,7 +114,7 @@ The older `caddy` and `dokuwiki` Komodo stacks are stopped. The active proxy is 
 
 ## Other Compose project locations
 
-These locations come from runtime labels. Projects under `/data/compose` carry older Portainer-era paths and were not listed as managed stacks by Komodo's API.
+These locations come from the 2026-09-28 runtime labels. Projects under `/data/compose` carried Portainer-era paths when their containers were created; their active definitions are now saved in Komodo.
 
 | Compose project | Recorded working directory |
 | --- | --- |
@@ -115,7 +126,7 @@ These locations come from runtime labels. Projects under `/data/compose` carry o
 | `teslamate` | `/data/compose/4` |
 | `uptime_kuma` | `/data/compose/52` |
 
-A container without Compose labels has an unknown original deployment source until it is checked in the relevant manager.
+The formerly loose applications now have saved Komodo Compose sources. Historical labels in the snapshot do not indicate current deployment ownership.
 
 ## Items to verify
 
@@ -124,7 +135,7 @@ A container without Compose labels has an unknown original deployment source unt
 - TeslaMate support services are running without a logger container in the host inventory.
 - Tandoor's database location was not established.
 - Blocky is still running during the migration to gateway DNS.
-- Watchtower's update scope and schedule, and application backup coverage, were not verified.
+- Watchtower is stopped after migration to Komodo; application backup coverage and full recreation tests remain to be verified.
 - Home Assistant and UniFi are verified off-host endpoints; see [Homelab devices](/infrastructure/devices). Caddy's `ninja` and `scrutiny` routes remain unmatched to a confirmed application.
 - Plex has one configured movie directory that did not exist at inspection. See [Plex](/services/plex). CrashPlan backup selections and successful restore coverage remain unverified.
 
