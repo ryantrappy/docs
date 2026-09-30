@@ -40,7 +40,7 @@ Home Assistant and UniFi run off-host. Use [Homelab devices](/infrastructure/dev
 
 ## Find the owning deployment
 
-Komodo's confirmed managed stacks are listed in the [inventory](/services/overview#confirmed-komodo-stacks). Update their source in Komodo, or the linked repository for the rankings stack.
+Komodo's managed stacks are listed in the [inventory](/services/overview#komodo-stacks-after-migration). Update their source in Komodo, or the linked repository for the rankings stack.
 
 Portainer-era containers may retain `/data/compose/...` labels from their last creation. Their active definitions are now saved in Komodo; use the Komodo Stack for changes and redeployment. Komodo core, periphery, and MongoDB use the independent bootstrap file at `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml`. See the private migration and rollback record at `/home/trappserver/komodo-migration/README.md`.
 

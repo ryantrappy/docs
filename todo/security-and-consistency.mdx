@@ -129,7 +129,7 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 10. Verify certificates on internal upstream connections
 
-**Evidence — confirmed configuration/documentation:** Caddy's Portainer TLS route uses `tls_insecure_skip_verify`. The UniFi upstream has no explicit HTTPS transport. The documented UniFi DNS automation disables controller certificate verification.
+**Evidence — confirmed configuration/documentation:** The UniFi upstream has no explicit HTTPS transport. The documented UniFi DNS automation disables controller certificate verification. Caddy's former Portainer route used `tls_insecure_skip_verify`; that route was removed on 2026-09-30.
 
 **Suggested fix:** Use a certificate and hostname that clients can verify, or trust a suitable private CA in the relevant client. Configure upstream TLS intentionally. Coordinate trust changes with the DNS sync and other integrations so they continue working. Browser-facing Caddy HTTPS does not secure every upstream hop. See [Caddy transport options](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#the-http-transport).
 
@@ -235,9 +235,9 @@ See [Plex library roots](/services/plex#library-roots).
 
 **Verification:** Komodo's service list found every application container. Each imported project was deployed once with Compose `--no-recreate`; Komodo recorded the project and services while their container IDs stayed unchanged. Maintainerr and Paperless AI were recreated by their new stacks and are running with their original data mounts. All application containers were running and none reported an unhealthy Docker health check after migration. The only running containers outside Komodo are Komodo core, periphery, and MongoDB, deployed from `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml` as the independent bootstrap path. Private Portainer Compose source copies and migration snapshots are under `/home/trappserver/komodo-migration/`.
 
-**Remaining validation:** A clean recreation and rollback have not been exercised for every imported service, especially TeslaMate PostgreSQL, InfluxDB, and Homelable. The inactive historical Portainer definitions were retained in the stopped Portainer data volume; do not deploy them without checking their current relevance. The Portainer Caddy route and older documentation links still need cleanup after the rollback window. Coordinate full data restore tests with item 07.
+**Remaining validation:** A clean recreation and rollback have not been exercised for every imported service, especially TeslaMate PostgreSQL, InfluxDB, and Homelable. The inactive historical Portainer definitions were retained in a private archive and the stopped Portainer data volume; do not deploy them without checking their current relevance. Portainer's two Caddy routes were removed and returned HTTP 404; Komodo still returned HTTP 200 through Caddy. Coordinate full data restore tests with item 07.
 
-- [ ] **Done when:** Each imported service has a verified clean recreation or recovery test, and the Portainer route and stale references are retired after the rollback window.
+- [ ] **Done when:** Each imported service has a verified clean recreation or recovery test; retain the independent Komodo bootstrap and rollback archive until recovery is proven.
 
 ## Track progress
 
