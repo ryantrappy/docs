@@ -175,21 +175,36 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 16. Review host listeners and network separation
 
-**Evidence — confirmed listeners; policy needs verification:** SSH and CUPS listen on IPv4 and IPv6 wildcard addresses. Homebridge and other native/host-network services also listen outside loopback. Existing documentation records desktop, printing, discovery, and remote-desktop services; their current necessity and effective firewall rules need review.
+**Review on 2026-09-30 — open.** The host LAN interface is `192.168.1.236/24`. `ss -lntup` confirmed IPv4 and IPv6 wildcard listeners. A wildcard bind identifies a potential path; it does not establish reachability through the host firewall or gateway.
 
-**Suggested fix:** Identify the owner and purpose of each listener, verify effective SSH authentication/root-login rules and live Fail2Ban state, and restrict printer/desktop/admin services to intended clients. Review trusted admin, IoT, guest, and public-app access boundaries at the gateway. Avoid disabling discovery needed by HomeKit or other devices without a replacement plan.
+| Listener group | Owner and purpose | Observed bind or port |
+| --- | --- | --- |
+| SSH | Native OpenSSH administration | TCP `22` on IPv4 and IPv6 wildcard addresses |
+| Printing and discovery | Native CUPS and Avahi; CUPS advertises printers over DNS-SD | TCP `631` and UDP `5353` on wildcard addresses |
+| Desktop and backup | GNOME Remote Desktop service and CrashPlan are running; map their process sockets and confirm whether remote access is required | Remote-desktop and other host listeners need process-level attribution |
+| Media and HomeKit | Native Plex and host-network Homebridge | Plex TCP `32400`; Homebridge UI `8581`; additional discovery ports depend on its plugins |
+| Proxy and DNS | Host-network Caddy and Docker-published Blocky | TCP `80/443`; DNS TCP/UDP `53`; Blocky UI TCP `4001` |
+| Docker application ports | Published by the named stacks in the [container inventory](/services/overview); management includes Komodo `9120`, and direct app ports include `2283`, `3001`, `3002`, `3005`, `3030`, `3080`, `3579`, `5055`, `5800`, `6246`, `6881`, `7878`, `8001`–`8003`, `8010`, `8085`–`8087`, `8112`, `8181`, `8282`, and `8989` | Most publish on both IPv4 and IPv6 wildcard addresses; check each deployment before changing a mapping |
 
-- [ ] **Done when:** Required listeners and allowed client networks are documented, SSH policy is verified, and guest/IoT clients cannot reach management services unless explicitly allowed.
+**SSH policy verified from the readable server configuration:** The effective OpenSSH settings were evaluated with a temporary test host key for `trappserver` and `ai-agent`. Ordinary users have `PasswordAuthentication yes`, public-key authentication enabled, keyboard-interactive authentication disabled, and `PermitRootLogin prohibit-password` (reported as `without-password`). The `ai-agent` match requires a public key, disables password authentication and forwarding. TCP `22` listens on both wildcard families. Fail2Ban is running, and its resolved on-disk configuration contains the SSH jail with five retries in ten minutes and a ten-minute ban. The live jail/ban state could not be read without root access.
+
+**Network boundary observed in UniFi:** The controller lists one corporate LAN, `192.168.1.0/24`, one enabled SSID mapped to it, and a WireGuard remote-user network, `192.168.2.0/24`. It lists no separate guest or IoT LAN/VLAN. The enabled VPN-to-Gateway rule blocks TCP `80/443`, but it does not cover every management port. WAN forwards are enabled for `80`, `443`, `32400`, `6881`, and `25565` to this host. The existing `homelab-internal-ports.service` is active and documents LAN-only handling for selected Caddy-related direct TCP ports; CUPS, SSH, Plex, and the full Docker port set are outside that selected list. The UFW service is active and its configuration specifies a default input drop, but the live host packet-filter rules were unavailable without root access. No guest/IoT-to-management reachability test was possible because no separate guest/IoT network is configured.
+
+**Next actions:** Decide which clients should reach SSH, printing, desktop, Plex, Homebridge, and each direct Docker port. Restrict unused or private listeners at the service, Docker publish, host firewall, and gateway as appropriate; preserve HomeKit and printer discovery where required. Decide whether ordinary SSH password login and root key login are needed. Inspect live UFW/iptables/nftables and Fail2Ban state with administrator access. If you add guest or IoT networks, place them in separate VLANs/zones, define explicit management access rules, and test from clients in each network. Verify public forwards from outside the LAN, especially Plex, qBittorrent, and Minecraft.
+
+- [ ] **Done when:** Required listeners and their allowed client networks are documented, SSH and live host policy are verified, and guest/IoT clients cannot reach management services unless explicitly allowed.
 
 ## P3 — inconsistencies and cleanup
 
-### 17. Correct Homelable's internal backend port
+### 17. Correct Homelable's internal backend port (Completed)
 
-**Evidence — confirmed mismatch; functional impact needs verification:** Homelable publishes backend host port `8002` to container port `8000`, but MCP's `BACKEND_URL` is `http://backend:8002`. Compose service-to-service traffic should use the backend's listening container port.
+- [x] **Complete — 2026-09-30:** Changed MCP's `BACKEND_URL` from `http://backend:8002` to `http://backend:8000` in the local Compose source and Komodo's saved Homelable stack, then deployed the stack. The backend still publishes host port `8002` for host access; MCP now uses the listening container port through service DNS.
 
-**Suggested fix:** Verify the backend listener, then change the source configuration to `http://backend:8000` if it is the intended endpoint. Review allowed browser origins separately; do not broaden CORS to hide the problem.
+**Verification:** The backend's Uvicorn command listens on `0.0.0.0:8000`. Before the change, `backend:8002` refused connections from the MCP container. After deployment, that container fetched the backend OpenAPI endpoint over `backend:8000` with HTTP 200, and an authenticated MCP `list_node_summaries` call completed without error. The frontend returned HTTP 200 on host port `3002`; backend and MCP health endpoints returned HTTP 200. A CORS preflight from the configured `https://label.ryantr.app` origin was allowed. The backend retained the `homelable_backend_data` volume.
 
-- [ ] **Done when:** MCP can read the backend through service DNS, browser access works from approved origins, and no dependency on the host port remains.
+**Rollback:** The previous private Komodo stack configuration is stored at `/home/trappserver/komodo-migration/snapshots/homelable-before-backend-port-20260930T192325Z.json`. Restore the previous `file_contents` through Komodo's UpdateStack API or editor and redeploy only if rollback is needed.
+
+**Limit:** Browser sign-in was not exercised. The `label.ryantr.app` hostname does not currently resolve on this host, and a local Caddy probe for that hostname returned 404; this checklist's management reference does not list a Caddy route for Homelable. The port fix did not change routing or CORS settings.
 
 ### 18. Reconcile proxy routes, redirects, and DNS updaters
 
