@@ -219,6 +219,24 @@ See [Plex library roots](/services/plex#library-roots).
 
 - [ ] **Done when:** Each app's dependencies, persistent data, deployment owner, and recreation procedure are documented, and expected data collection is current.
 
+## Additional planned work
+
+### 21. Add shared authentication with Authelia
+
+**Why:** Caddy currently relies on per-app login and LAN-only rules for different routes. A shared authentication layer could give selected browser-facing apps one sign-in policy and two-factor authentication.
+
+**Suggested fix:** Inventory each Caddy route and its clients before choosing which routes should use Authelia. Deploy Authelia with protected secrets and recovery access, then integrate selected routes through Caddy's supported `forward_auth` flow. Define per-route access policy and test trusted-proxy headers, direct-port bypasses, logout, and behavior when Authelia is unavailable. Keep mobile apps, APIs, webhooks, and machine-to-machine paths working through an explicit policy rather than a blanket redirect. See [Authelia's Caddy integration](https://www.authelia.com/integration/proxies/caddy/) and [forward-auth validation](https://www.authelia.com/reference/guides/validating-forwarded-authentication/).
+
+- [ ] **Done when:** Intended browser routes require the agreed shared login and second factor, unauthorized requests are blocked through each ingress path, legitimate app clients still work, and administrator recovery is tested.
+
+### 22. Move remaining Portainer and loose containers into Komodo stacks
+
+**Why:** Portainer-owned Compose stacks and standalone containers still sit outside Komodo. Their deployment sources and recreation steps are split across managers, which complicates reviewed updates and recovery.
+
+**Suggested fix:** Inventory each remaining Portainer stack and standalone container, including mounts, environment, networks, ports, credentials, database dependencies, and existing backup paths. Import one workload at a time as a Komodo Stack, preserving its project name and persistent data. Test restore and service behavior before retiring the old manager entry. Plan Komodo core, periphery, and MongoDB as a bootstrap exception or give them an independent recovery path so Komodo can be rebuilt when it is unavailable. Reconcile Watchtower labels as ownership changes.
+
+- [ ] **Done when:** Every eligible workload has a saved Komodo source, tested recreation and rollback, one update owner, and no duplicate active deployment; any bootstrap exception has a documented external recovery method.
+
 ## Track progress
 
 For each completed item, record:
