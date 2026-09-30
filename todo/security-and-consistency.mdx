@@ -113,11 +113,13 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 08. Choose one update owner per service
 
-**Evidence — confirmed configuration; broad scope inferred from defaults:** Watchtower has no command arguments and no inspected opt-in or monitor-only environment settings. Containers lack its enable/disable labels. Its documented default is to watch all containers. Komodo-managed stacks, Portainer-era stacks, standalone containers, moving image tags, and local builds coexist. See [Watchtower selection rules](https://containrrr.dev/watchtower/container-selection/).
+- [x] **Complete — 2026-09-30:** Komodo is the update owner for all **11** managed stacks. Its saved `auto_update` and `poll_for_updates` settings are enabled on every stack. Watchtower is now an explicit opt-in updater for **17** running external application containers. Its `--label-enable` setting excludes all **20** running Komodo containers; none carries an enable label. Seven running database or Docker-management containers are manual-update exceptions.
 
-**Suggested fix:** Decide which services use reviewed manager-driven updates and which may update automatically. Consider Watchtower opt-in or monitor-only use, especially for databases and applications with coordinated upgrades. Record installed versions/digests, backup prerequisites, maintenance windows, and rollback plans. Use explicit release tags or digests where reproducibility matters, paired with a regular update process.
+**Durable configuration:** Watchtower runs from `/home/trappserver/Documents/watchtower/compose.yaml` and excludes itself. External application labels live in Homelable's Compose source, five Portainer-owned Compose files, and seven standalone Compose definitions under `/home/trappserver/Documents/standalone-services/`. Portainer-owned database services are explicitly labeled `com.centurylinklabs.watchtower.enable=false` for their next redeployment. Komodo's automatic update settings were changed through its API. Watcharr is the media-watchlist app and remains managed by Komodo; Watchtower is the updater changed here. See [Komodo automatic updates](https://komo.do/docs/deploy/compose) and [Watchtower opt-in selection](https://containrrr.dev/watchtower/container-selection/).
 
-- [ ] **Done when:** Each service has one documented update owner, database upgrades cannot happen accidentally, and local Caddy/rankings images retain their intended build workflow.
+**Exceptions and limits:** Komodo core, periphery, and MongoDB; Portainer; TeslaMate PostgreSQL; InfluxDB; and Watchtower itself remain manual-update services. Komodo's automatic update setting does not publish new versions of the locally built Caddy/rankings images or change an intentionally pinned image digest; their build or pin changes remain deliberate work. The chosen Komodo policy permits same-tag updates to database images managed in Komodo, so database backup and release review remain important.
+
+**Verification and rollback:** All 44 running containers matched the ownership policy: 20 Komodo excluded, 17 external apps opted in, and seven exceptions excluded. Watchtower and health-checked recreated services were healthy, with zero observed restarts. Blocky answered DNS; Homebridge, Maintainerr, Grafana, and Uptime Kuma returned HTTP 200. Portainer's saved Compose files matched the applied files. Private before snapshots and rollback notes are under `/home/trappserver/watchtower-opt-in/`. Former standalone application containers and the old Watchtower container remain stopped temporarily for rollback; do not start the old Watchtower alongside the new one.
 
 ### 09. Complete the Blocky transition and reduce its privileges
 
@@ -218,6 +220,24 @@ See [Plex library roots](/services/plex#library-roots).
 **Suggested fix:** Identify Tandoor's real database and backup method, and establish whether the TeslaMate logger runs elsewhere, is intentionally stopped, or is missing. Record the deployment source and recovery instructions for standalone/legacy containers before any consolidation. Verify data freshness rather than equating a running dashboard with a working collector.
 
 - [ ] **Done when:** Each app's dependencies, persistent data, deployment owner, and recreation procedure are documented, and expected data collection is current.
+
+## Additional planned work
+
+### 21. Add shared authentication with Authelia
+
+**Why:** Caddy currently relies on per-app login and LAN-only rules for different routes. A shared authentication layer could give selected browser-facing apps one sign-in policy and two-factor authentication.
+
+**Suggested fix:** Inventory each Caddy route and its clients before choosing which routes should use Authelia. Deploy Authelia with protected secrets and recovery access, then integrate selected routes through Caddy's supported `forward_auth` flow. Define per-route access policy and test trusted-proxy headers, direct-port bypasses, logout, and behavior when Authelia is unavailable. Keep mobile apps, APIs, webhooks, and machine-to-machine paths working through an explicit policy rather than a blanket redirect. See [Authelia's Caddy integration](https://www.authelia.com/integration/proxies/caddy/) and [forward-auth validation](https://www.authelia.com/reference/guides/validating-forwarded-authentication/).
+
+- [ ] **Done when:** Intended browser routes require the agreed shared login and second factor, unauthorized requests are blocked through each ingress path, legitimate app clients still work, and administrator recovery is tested.
+
+### 22. Move remaining Portainer and loose containers into Komodo stacks
+
+**Why:** Portainer-owned Compose stacks and standalone containers still sit outside Komodo. Their deployment sources and recreation steps are split across managers, which complicates reviewed updates and recovery.
+
+**Suggested fix:** Inventory each remaining Portainer stack and standalone container, including mounts, environment, networks, ports, credentials, database dependencies, and existing backup paths. Import one workload at a time as a Komodo Stack, preserving its project name and persistent data. Test restore and service behavior before retiring the old manager entry. Plan Komodo core, periphery, and MongoDB as a bootstrap exception or give them an independent recovery path so Komodo can be rebuilt when it is unavailable. Reconcile Watchtower labels as ownership changes.
+
+- [ ] **Done when:** Every eligible workload has a saved Komodo source, tested recreation and rollback, one update owner, and no duplicate active deployment; any bootstrap exception has a documented external recovery method.
 
 ## Track progress
 
