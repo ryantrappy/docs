@@ -42,7 +42,7 @@ Home Assistant and UniFi run off-host. Use [Homelab devices](/infrastructure/dev
 
 Komodo's confirmed managed stacks are listed in the [inventory](/services/overview#confirmed-komodo-stacks). Update their source in Komodo, or the linked repository for the rankings stack.
 
-Portainer-era projects retain `/data/compose/...` labels. Use their existing definition and manager. For containers without labels, locate the saved deployment definition before attempting to recreate them.
+Portainer-era containers may retain `/data/compose/...` labels from their last creation. Their active definitions are now saved in Komodo; use the Komodo Stack for changes and redeployment. Komodo core, periphery, and MongoDB use the independent bootstrap file at `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml`. See the private migration and rollback record at `/home/trappserver/komodo-migration/README.md`.
 
 Preserve project names, mounts, port mappings, networks, and environment settings. Generated Compose files are useful evidence but may be overwritten by the manager.
 
@@ -57,7 +57,7 @@ Preserve project names, mounts, port mappings, networks, and environment setting
 
 Many services use moving tags such as `latest`, `release`, or `:2`. Those tags do not identify the exact release currently running. Local images such as Caddy and rankings need their existing build workflow.
 
-Watchtower is running, but this inventory did not establish which containers it updates. Coordinate its settings with manual updates.
+Watchtower is stopped with restart disabled. Komodo owns application updates; TeslaMate PostgreSQL, Network Optimizer's InfluxDB, and Paperless PostgreSQL are excluded from their stacks' global automatic updates.
 
 ## Separate DNS, proxy, and application failures
 

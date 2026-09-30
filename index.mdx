@@ -41,11 +41,11 @@ Use this site as the operating reference when setting up an application, changin
 | Main Docker host | `192.168.1.236` |
 | LAN | `192.168.1.0/24` |
 | Gateway and primary LAN DNS | `192.168.1.1` |
-| Container management | [Komodo](https://komodo.ryantr.app), with existing [Portainer](https://port.ryantr.app) deployments |
+| Container management | [Komodo](https://komodo.ryantr.app); Portainer is stopped after the 2026-09-30 migration |
 | HTTPS routing | Caddy, using `ryantr.app` and `ryantrapp.com` |
 | Service snapshot | 44 running containers on 2026-09-28 |
 
-Komodo, Portainer, and several administration routes require LAN access through Caddy. A hostname listed in the configuration does not guarantee its application is responding.
+Komodo and several administration routes require LAN access through Caddy. Portainer's old hostname remains configured but its container is stopped. A hostname listed in the configuration does not guarantee its application is responding.
 
 ## What belongs in these docs
 

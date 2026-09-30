@@ -30,7 +30,7 @@ No Caddy hostnames for Kuma, Homelable, or the Komodo MCP server were found.
 
 Retain Komodo's MongoDB volumes, keys volume, Core configuration, and backup directory. A backup directory mount does not prove that a backup is scheduled or restorable.
 
-Watchtower is running with the Docker socket mounted. Its update scope, schedule, and monitor-only behavior were not established. Review its settings when coordinating Komodo updates.
+Watchtower was stopped after Komodo took ownership of all application projects. Komodo core, periphery, and MongoDB remain outside Komodo under their independent bootstrap Compose file.
 
 Use [Service operations](/operations/services) for the maintenance workflow.
 
