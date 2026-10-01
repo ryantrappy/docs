@@ -20,11 +20,11 @@ Caddy routes `ombi.ryantr.app` publicly. It guards `radarr`, `sonarr`, `sab`, `w
 
 | Container | Observed host → container mapping |
 | --- | --- |
-| `arr_stack-ombi-1` | `3579 → 5055/tcp` |
+| `arr_stack-ombi-1` | `3579 → 3579/tcp` |
 | `arr_stack-overseerr-1` | `5055 → 3579/tcp` |
 | `arr_stack-sonarr-1` | `8112 → 8112/tcp`; `8989/tcp` is exposed without a host binding |
 
-These unusual mappings are recorded exactly as Docker reports them. Check the configured application listeners and browser responses before changing them. Caddy currently targets host ports 3579 for Ombi and 8112 for Sonarr. This inventory did not change or test those listeners.
+Ombi was corrected on 2026-10-01: its published port 3579 previously pointed to container port 5055, while Ombi listened on 3579. The saved Komodo `arr_stack` now uses `3579:3579`; only Ombi was redeployed. Its direct port serves HTML with HTTP 200 and its local Caddy HTTPS route returns 200. Overseerr and Sonarr's mappings remain recorded as observed and require their own listener checks. Caddy targets host ports 3579 for Ombi and 8112 for Sonarr.
 
 qBittorrent publishes 8989 and 6881; 6881 is bound over TCP and UDP. MeTube publishes 8085, Czkawka 5800, and Tautulli 8181. No Caddy route for those services or Overseerr was found.
 
@@ -53,7 +53,7 @@ Ombi media request application.
 | Image tag | `lscr.io/linuxserver/ombi:latest` |
 | Compose project / service | `arr_stack` / `ombi` |
 | Network | `arr_stack_default` |
-| Host → container ports | `3579 → 5055/tcp` |
+| Host → container ports | `3579 → 3579/tcp` |
 | Restart policy | `unless-stopped` |
 | Docker health | No healthcheck configured |
 | Caddy route | [ombi.ryantr.app](https://ombi.ryantr.app) |
