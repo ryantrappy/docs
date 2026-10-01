@@ -89,6 +89,7 @@ All names in this table end in `.ryantr.app`.
 | `recipes` | `127.0.0.1:8686` |
 | `paperless` | `127.0.0.1:8010` |
 | `immich` | `127.0.0.1:2283` |
+| `tautulli` | `127.0.0.1:8181` |
 
 ### LAN-only application routes
 
@@ -135,6 +136,7 @@ Authelia runs in its own Komodo stack, pinned to version 4.39.28 and the tested 
 | `ninja.ryantr.app`, `recipes.ryantr.app`, `paperless.ryantr.app` | Authelia password and TOTP |
 | `immich.ryantr.app` | Authelia password and TOTP for browser routes; `/api` retains Immich authentication |
 | `uptime.ryantrapp.com` | Authelia password and TOTP |
+| `tautulli.ryantr.app` | Authelia password and TOTP |
 | External Cloudflare Tunnel access to `komodo.ryantr.app` | Authelia password and TOTP; direct LAN HTTPS keeps the existing LAN guard |
 | Resume pages, `ombi.ryantr.app`, `rankings.ryantr.app` | Existing public access and app login policies |
 | `auth.ryantr.app`, `auth.ryantrapp.com` | Public Authelia login portals; separate session cookies for the two domains |
@@ -155,7 +157,7 @@ Keep the prior Caddyfile and tunnel configuration snapshots under `/home/trappse
 
 ### Validation and limits
 
-Password authentication, password-only denial, TOTP access, logout, invalid native API token rejection, native Home Assistant authorization assets, and authentication-outage behavior were checked. The public login portal gives 200 and public Uptime Kuma redirects to Authelia. The public A-record audit found eleven hostnames still pointing to the old WAN IP because DDNS managed only the apex and Ombi. All thirteen server A records now match the current WAN IP, and the saved Komodo DDNS stack manages each hostname. Normal public HTTPS checks give Authelia redirects for Home Assistant, Immich, Paperless, Ninja, and recipes, and 200 for Ombi, rankings, and the apex/www resume sites. Tautulli's hostname returns Caddy's fallback 404 because it has no configured route. Test actual companion app login, refresh, and sync from your devices.
+Password authentication, password-only denial, TOTP access, logout, invalid native API token rejection, native Home Assistant authorization assets, and authentication-outage behavior were checked. The public login portal gives 200 and public Uptime Kuma redirects to Authelia. The public A-record audit found eleven hostnames still pointing to the old WAN IP because DDNS managed only the apex and Ombi. All thirteen server A records now match the current WAN IP, and the saved Komodo DDNS stack manages each hostname. Normal public HTTPS checks give Authelia redirects for Home Assistant, Immich, Paperless, Ninja, and recipes, and 200 for Ombi, rankings, and the apex/www resume sites. Tautulli's hostname now proxies to `127.0.0.1:8181` through an Authelia password-and-TOTP gate. Anonymous public requests redirect to Authelia; a verified two-factor session reaches Tautulli's own login redirect, and its backend login page returns 200. Test actual companion app login, refresh, and sync from your devices.
 
 Invoice Ninja and recipes had existing upstream 502 responses before Authelia and still return 502 after passing the gate. Track the remaining checks in [TODO item 21](/todo/security-and-consistency).
 
