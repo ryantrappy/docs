@@ -24,7 +24,7 @@ Caddy routes `ombi.ryantr.app` publicly. It guards `radarr`, `sonarr`, `sab`, `w
 | `arr_stack-overseerr-1` | `5055 → 3579/tcp` |
 | `arr_stack-sonarr-1` | `8112 → 8112/tcp`; `8989/tcp` is exposed without a host binding |
 
-Ombi was corrected on 2026-10-01: its published port 3579 previously pointed to container port 5055, while Ombi listened on 3579. The saved Komodo `arr_stack` now uses `3579:3579`; only Ombi was redeployed. Its direct port serves HTML with HTTP 200 and its local Caddy HTTPS route returns 200. Overseerr and Sonarr's mappings remain recorded as observed and require their own listener checks. Caddy targets host ports 3579 for Ombi and 8112 for Sonarr.
+Ombi was corrected on 2026-10-01: its published port 3579 previously pointed to container port 5055, while Ombi listened on 3579. The saved Komodo `arr_stack` now uses `3579:3579`; only Ombi was redeployed. Its direct port serves HTML with HTTP 200. A subsequent LAN browser 522 was traced to Ombi's Cloudflare A record retaining the old WAN address while DDNS updated only the apex. The record was corrected and `ombi.ryantr.app` was added to the saved Komodo DDNS configuration. Local and public Cloudflare HTTPS requests, the service-worker script, and its manifest now return HTTP 200. Overseerr and Sonarr's mappings remain recorded as observed and require their own listener checks. Caddy targets host ports 3579 for Ombi and 8112 for Sonarr.
 
 qBittorrent publishes 8989 and 6881; 6881 is bound over TCP and UDP. MeTube publishes 8085, Czkawka 5800, and Tautulli 8181. No Caddy route for those services or Overseerr was found.
 
