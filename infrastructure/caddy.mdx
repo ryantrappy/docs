@@ -155,9 +155,15 @@ Keep the prior Caddyfile and tunnel configuration snapshots under `/home/trappse
 
 ### Validation and limits
 
-Password authentication, password-only denial, TOTP access, logout, invalid native API token rejection, native Home Assistant authorization assets, and authentication-outage behavior were checked. The public login portal gives 200 and public Uptime Kuma redirects to Authelia. A-record routes were checked through local TLS; requests through their public WAN address time out from this host, so confirm those routes from outside the LAN. Test actual companion app login, refresh, and sync from your devices.
+Password authentication, password-only denial, TOTP access, logout, invalid native API token rejection, native Home Assistant authorization assets, and authentication-outage behavior were checked. The public login portal gives 200 and public Uptime Kuma redirects to Authelia. The public A-record audit found eleven hostnames still pointing to the old WAN IP because DDNS managed only the apex and Ombi. All thirteen server A records now match the current WAN IP, and the saved Komodo DDNS stack manages each hostname. Normal public HTTPS checks give Authelia redirects for Home Assistant, Immich, Paperless, Ninja, and recipes, and 200 for Ombi, rankings, and the apex/www resume sites. Tautulli's hostname returns Caddy's fallback 404 because it has no configured route. Test actual companion app login, refresh, and sync from your devices.
 
 Invoice Ninja and recipes had existing upstream 502 responses before Authelia and still return 502 after passing the gate. Track the remaining checks in [TODO item 21](/todo/security-and-consistency).
+
+## Public DDNS coverage
+
+The Komodo `cloudflare-ddns` stack updates thirteen server A records: `ryantr.app`, `www.ryantr.app`, `ha`, `immich`, `minecraft`, `ninja`, `ombi`, `paperless`, `rankings`, `recipes`, and `tautulli` under `.ryantr.app`, plus `ryantrapp.com` and `www.ryantrapp.com`. A zone apex does not automatically include its subdomains; every managed hostname is listed explicitly in `DOMAINS`.
+
+The 2026-10-01 repair corrected eleven stale origins and preserved each record's proxy status and TTL. Minecraft and rankings remain unproxied. Tunnel and Mintlify CNAME records are independent of the WAN IP and remain outside DDNS.
 
 ## LAN DNS and automatic additions
 
