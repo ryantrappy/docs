@@ -1,0 +1,60 @@
+---
+title: "Overview"
+description: "Service links, access requirements, and the few operational shortcuts you need most often."
+icon: "compass"
+---
+
+## Service links
+
+**LAN** means connect from the home network. **Authelia** means use the shared sign-in portal; the app may also require its own login. Hostnames below come from the active Caddy configuration checked on **2026-10-02**. A configured route does not establish that the app is available.
+
+| Service | Open | Access / useful note |
+| --- | --- | --- |
+| Komodo | [komodo.ryantr.app](https://komodo.ryantr.app) | Manage stacks, deployments, and container logs. LAN; configured remote tunnel uses Authelia. |
+| Uptime Kuma | [uptime.ryantrapp.com](https://uptime.ryantrapp.com) | Service monitoring. Authelia. |
+| UniFi | [unifi.ryantr.app](https://unifi.ryantr.app) | Network management. LAN; gateway also at [192.168.1.1](https://192.168.1.1). |
+| Home Assistant | [ha.ryantr.app](https://ha.ryantr.app) | Home automation. Authelia; runs on a separate device. |
+| Homebridge | [homebridge.ryantr.app](https://homebridge.ryantr.app) | HomeKit bridge and plugins. LAN. |
+| Paperless | [paperless.ryantr.app](https://paperless.ryantr.app) | Documents and search. Authelia. |
+| Immich | [immich.ryantr.app](https://immich.ryantr.app) | Photos and videos. Authelia; containers stopped at this check. |
+| Tandoor | [recipes.ryantr.app](https://recipes.ryantr.app) | Recipes. Authelia; container stopped at this check. |
+| Fantasy rankings | [rankings.ryantr.app](https://rankings.ryantr.app) | Fantasy league reports and ranking studio. App sign-in. |
+| Ombi | [ombi.ryantr.app](https://ombi.ryantr.app) | Media requests. App sign-in. |
+| Radarr | [radarr.ryantr.app](https://radarr.ryantr.app) | Movies. LAN. |
+| Sonarr | [sonarr.ryantr.app](https://sonarr.ryantr.app) | TV shows. LAN; [published port mapping needs verification](/services/media#port-mapping-checks). |
+| SABnzbd | [sab.ryantr.app](https://sab.ryantr.app) | Usenet downloads and queue. LAN. |
+| Tautulli | [tautulli.ryantr.app](https://tautulli.ryantr.app) | Plex activity and statistics. Authelia. |
+| Maintainerr | [maintainerr.ryantr.app](https://maintainerr.ryantr.app) | Plex library cleanup rules. LAN. |
+| Watcharr | [watcharr.ryantr.app](https://watcharr.ryantr.app) | Watch history and watchlists. LAN. |
+| Invoice Ninja route | [ninja.ryantr.app](https://ninja.ryantr.app) | Authelia; route exists, application not confirmed in the inventory. |
+| Scrutiny route | [scrutiny.ryantr.app](https://scrutiny.ryantr.app) | LAN; route exists, application not confirmed in the inventory. |
+| Sign-in portals | [auth.ryantr.app](https://auth.ryantr.app), [auth.ryantrapp.com](https://auth.ryantrapp.com) | Shared authentication for the corresponding domain. |
+| Personal website | [ryantr.app](https://ryantr.app), [ryantrapp.com](https://ryantrapp.com) | Both domains and their `www` aliases serve the static site. |
+
+### Local interfaces
+
+Use these addresses from the LAN for services without a Caddy hostname. These direct connections do not use Caddy's Authelia gate. The responding interfaces returned HTTP 200 or, for Plex, an authentication response on **2026-10-02**; app sign-in and functionality were not tested.
+
+| Service | Open | Useful note |
+| --- | --- | --- |
+| Plex | [Plex Web](http://192.168.1.236:32400/web/) | Native media server; [library and storage reference](/services/plex). |
+| Homelable | [192.168.1.236:3002](http://192.168.1.236:3002/) | Homelab visualization and status. |
+| Network Optimizer | [192.168.1.236:8042](http://192.168.1.236:8042/) | Network analysis. |
+| Network speed test | [192.168.1.236:3005](http://192.168.1.236:3005/) | Local speed test interface. |
+| MeTube | [192.168.1.236:8085](http://192.168.1.236:8085/) | Video downloads. |
+| qBittorrent | [192.168.1.236:8989](http://192.168.1.236:8989/) | Torrent interface; this port is distinct from Sonarr's configured port. |
+| Duplicate finder | [192.168.1.236:5800](http://192.168.1.236:5800/) | Czkawka browser interface. |
+| Paperless AI | [192.168.1.236:8087](http://192.168.1.236:8087/) | Document tagging companion. |
+| InfluxDB | [192.168.1.236:8086](http://192.168.1.236:8086/) | Network Optimizer's metrics database. |
+| Blocky | [192.168.1.236:4001](http://192.168.1.236:4001/) | DNS HTTP endpoint; gateway DNS is the primary resolver. |
+| Overseerr | [192.168.1.236:5055](http://192.168.1.236:5055/) | Published address did not respond at this check; [port mapping reference](/services/media#port-mapping-checks). |
+| TeslaMate Grafana | [192.168.1.236:3000](http://192.168.1.236:3000/) | Saved dashboard address; TeslaMate containers are currently stopped. |
+
+Database, broker, tunnel, and background services have no separate user interface. Find their deployment and data in the [full service inventory](/services/overview).
+
+## Keep these handy
+
+- **Change deployments in Komodo.** Use the saved stack definition, or the linked repository for rankings. Portainer and Watchtower are stopped. See [service updates](/operations/services#update-a-service).
+- **For a LAN hostname that fails, check DNS first.** Query `192.168.1.1`; internal service names should resolve to `192.168.1.236`. The [DNS and proxy checks](/operations/services#separate-dns-proxy-and-application-failures) help isolate the cause.
+- **If Plex media disappears, check the disk mounts.** Keep [Plex library paths](/services/plex) and [storage and recovery notes](/infrastructure/host-reliability) nearby.
+- **If Komodo itself is down, use its independent bootstrap Compose file.** Location: `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml`. See [deployment ownership](/operations/services#find-the-owning-deployment) before recreating services.

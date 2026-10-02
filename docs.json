@@ -17,6 +17,13 @@
         ]
       },
       {
+        "group": "Overview",
+        "icon": "compass",
+        "pages": [
+          "overview"
+        ]
+      },
+      {
         "group": "Infrastructure",
         "icon": "server",
         "pages": [
