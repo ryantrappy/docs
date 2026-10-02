@@ -102,6 +102,17 @@ Retain volume names and host paths when restoring. Removing a container does not
 
 Record the new access path, image/release, deployment source, ports, data locations, dependencies, and verification date. Explain any remaining unknowns beside the affected service so the next maintenance task starts with useful evidence.
 
+## Complete a change
+
+Before marking any homelab change complete, add a dated entry to the [Changelog](/changelog). This applies to deployments, configuration, services, networking, storage, security and documentation.
+
+1. Update the affected service reference and checklist status.
+2. Add or extend the current UTC date in the changelog. State the actual change, affected services, verification results and any deferred work or required user action.
+3. Save the documentation changes with the same change delivery. If publication is blocked or a PR is still open, report that status and its link explicitly.
+4. Keep credential values and private recovery material out of the entry.
+
+Do not describe a proposal, unverified deployment or pending publication as completed. Record reversions and corrections as new outcomes so the history remains useful.
+
 ## Privileged management access
 
 Docker control is host-administrator access. Periphery is the only retained socket-mounted container. Komodo and Homelable MCP require authentication and direct management ports are limited to LAN/server-local clients by the persistent host policy.
