@@ -29,7 +29,8 @@
         "pages": [
           "infrastructure/caddy",
           "infrastructure/host-reliability",
-          "infrastructure/devices"
+          "infrastructure/devices",
+          "infrastructure/unifi-https"
         ]
       },
       {
@@ -52,7 +53,8 @@
         "group": "Operations",
         "icon": "screwdriver-wrench",
         "pages": [
-          "operations/services"
+          "operations/services",
+          "operations/backup-coverage"
         ]
       },
       {
