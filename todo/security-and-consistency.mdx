@@ -258,13 +258,13 @@ See [Caddy setup](/infrastructure/caddy), [Authelia's Caddy integration](https:/
 
 - [ ] **Done when:** Each imported service has a verified clean recreation or recovery test; retain the independent Komodo bootstrap and rollback archive until recovery is proven.
 
-### 23. Add Komodo Periphery agents to the other Macs
+### 23. Add Komodo Periphery agents to the other Macs (Completed)
 
-**Targets:** The two MacBook Pros and the Mac mini in this homelab.
+**Completion recorded — 2026-10-02:** Marked complete at the homelab owner's request.
 
-**Suggested work:** Record each Mac's hostname, address, macOS version, CPU architecture, Docker availability, and intended workloads. Check Komodo's supported Periphery installation method for each host, including Docker Desktop's VM and host-path behavior on macOS. Create a separate Komodo Server entry and onboarding key for each Mac, install and configure its agent with a persistent launch method, and restrict connectivity and Docker access to what Komodo requires. Keep onboarding credentials out of documentation. See [Komodo's server connection guide](https://komo.do/docs/setup/connect-servers).
+**Current status:** Komodo lists `m1-mac` as `Ok` and `ryan-macbook` as `NotOk`, alongside `Local`. A third Mac Server entry was not present in this readback. Reboot persistence and management actions on the Macs were not independently tested during this change.
 
-- [ ] **Done when:** All three Macs appear as separate healthy Servers in Komodo, their Docker inventory and a harmless management action work, agents reconnect after reboot, and each host's install, access, and recovery steps are documented.
+- [x] **Completed:** Periphery onboarding marked complete per owner confirmation; current connectivity is recorded above.
 
 ## Track progress
 
