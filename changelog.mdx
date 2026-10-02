@@ -1,0 +1,48 @@
+---
+title: "Changelog"
+description: "Dated homelab changes, verification results and remaining follow-ups."
+icon: "clock-rotate-left"
+---
+
+Use this log to see what changed and whether any follow-up affects you. Entries use UTC dates, with the newest first. Service references describe the current setup; this log preserves the change history.
+
+## 2026-10-02
+
+### Documentation and change tracking
+
+- Added an Overview with service links and quick operational references.
+- Added this Changelog section and made a dated entry part of the change-completion workflow.
+- Moved completed checklist items to [Completed items](/todo/completed), keeping unresolved work on the [active checklist](/todo/security-and-consistency).
+
+### Management, DNS and monitoring
+
+- Restricted direct MCP/backend access to trusted clients, verified authentication, and added a separate read-only inventory login. Removed retired management containers while retaining recovery data.
+- Removed Blocky. A restricted DNS forwarder preserves clients using its old address while UniFi remains the primary resolver.
+- Disabled the legacy DDNS client; Cloudflare DDNS is the sole public DNS updater.
+- Deployed [Scrutiny](/services/scrutiny) through Komodo to monitor all physical drives and restored its existing web route.
+- Removed the obsolete DuckDNS redirect.
+- Hardened deployment credential storage and rotated Homelable credentials. Git-token revocation remains deferred by request.
+
+**Verification:** Management access, read-only authorization, local DNS over UDP/TCP, DNS sync, public HTTPS, DDNS records and Scrutiny metrics were checked during their respective changes. These checks do not establish that every application workflow or external access path was tested.
+
+### Recovery and certificate follow-ups
+
+- Added the [backup coverage register](/operations/backup-coverage). No backup jobs, restore tests or archive validation were run. Off-host destination and retention decisions remain open.
+- Added the [UniFi HTTPS plan](/infrastructure/unifi-https) and scoped CA-file support for DNS sync. Certificate activation and verified upstream TLS remain pending client trust configuration.
+
+## Record future changes
+
+For every homelab configuration, deployment, service, networking, storage, security or documentation change, update this page before marking the work complete. Add to the existing UTC date or create a new date above it.
+
+Each entry must state:
+
+- What changed and why it matters.
+- Which services or documentation are affected, with links where useful.
+- What was checked and the result. State explicitly when checks were skipped.
+- Any user action, deferred work, disruption or rollback reference that matters.
+
+Record actual outcomes. A plan, queued deployment or open documentation PR must retain its pending status. Append corrections or rollback outcomes rather than erasing earlier history.
+
+Keep passwords, tokens, recovery codes, private keys and credential-bearing logs out of the changelog. Group related work into concise entries; avoid copying full configuration or repeating entire checklist items.
+
+See the [change-completion checklist](/operations/services#complete-a-change).
