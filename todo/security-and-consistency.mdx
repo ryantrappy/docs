@@ -57,7 +57,7 @@ Before a change, identify the owning deployment, record the current version/conf
 
 **Verification:** Temporary network namespace probes showed all eleven host ports blocked from non-LAN IPv4 and IPv6 sources. A simulated LAN source reached all ten running ports. Packet counters confirmed both the native INPUT and IPv4 Docker DNAT forwarding paths were exercised. Public HTTPS returned 200 on both address families, and active internal Caddy routes remained available. Test containers, links, and routes were removed.
 
-**Limitations:** Scrutiny already has no listening upstream: direct port `8081` refuses LAN connections and its Caddy route returns 502. This remains for item 18. Boot dependency ordering was checked, but a production reboot was not performed. Gateway verification used configuration readback; an actual VPN/WAN client test was not available. Services outside Caddy's `internal-only` set, including the separate MCP listeners, were outside this requested change.
+**Update — 2026-10-02:** Scrutiny now listens on loopback port `8081`; its Caddy LAN route returns HTTP 200. Direct LAN access to port `8081` remains unavailable. Boot dependency ordering was checked, but a production reboot was not performed. Gateway verification used configuration readback; an actual VPN/WAN client test was not available. Services outside Caddy's `internal-only` set, including the separate MCP listeners, were outside this requested change.
 
 **Maintenance and rollback:** Implementation, verification results, and before/after snapshots are under `/home/trappserver/Documents/caddy_v2/internal-port-access/`; use its `README.md`. Reload the host policy with `sudo systemctl reload homelab-internal-ports.service`. The script's `remove` command removes only its own rules; disable boot installation and remove the Docker drop-in when rolling back permanently. Roll back UniFi by disabling or removing only the named policy. Avoid restoring an old full firewall snapshot over current Docker rules.
 
@@ -208,7 +208,9 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 
 ### 18. Reconcile proxy routes, redirects, and DNS updaters
 
-**Evidence — configuration inconsistencies:** The DuckDNS redirect targets a different LAN address from the documented Caddy host. Caddy includes Invoice Ninja and Scrutiny upstreams, but the current inventory showed neither a matching container nor a host listener on their configured local ports. Native `ddclient` and Docker Cloudflare DDNS both exist; record ownership was not established.
+**Update — 2026-10-02:** Removed the obsolete DuckDNS redirect from Caddy and verified it is absent from the loaded configuration. Deployed Scrutiny as a Komodo stack; its existing LAN hostname now returns HTTP 200, with current SMART metrics for all 11 physical drives. See [Scrutiny](/services/scrutiny).
+
+**Remaining:** Invoice Ninja's upstream still needs reconciliation. Native `ddclient` and Docker Cloudflare DDNS both exist; record ownership remains to be established.
 
 **Suggested fix:** Decide whether each route is active, intentionally dormant, or obsolete. Test the intended upstream before updating or removing a route. Correct or retire the legacy redirect after confirming its purpose. Map each DNS updater to its provider and record names, and remove overlap only after establishing which updater should own each record.
 
