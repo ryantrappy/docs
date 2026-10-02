@@ -22,51 +22,39 @@ Before a change, identify the owning deployment, record the current version/conf
 
 ## P1 — credentials and access
 
-### 01. Protect and replace exposed deployment credentials
+### 01. Protect and replace exposed deployment credentials (Git revocation deferred)
 
-**Evidence — confirmed:** The rankings checkout's `.git/config` contains a credential in its HTTPS remote URL and has mode `0644`. The checkout directories were readable by the current non-root account. Homelable's `.env` has mode `0664` and includes `MCP_API_KEY`, `SECRET_KEY`, and a password-hash setting. Other inspected credential stores, including `~/.git-credentials` and `~/.codex/config.toml`, already use `0600`.
+**Mitigated — 2026-10-02:** Restricted Komodo generated stacks/checkouts, bootstrap configuration, local Homelable secrets, migration archives and Codex configuration directories. Credential-bearing files use owner-only access; root-owned `/etc/komodo` is inaccessible to ordinary users. The public rankings repository now pulls anonymously with a credential-free remote URL; a successful Komodo refresh retained that clean URL and the access restrictions.
 
-**Suggested fix:** Restrict access to the affected files and checkout directories through the owning deployment workflow. Replace the affected Git credential, use the narrowest repository permissions needed, and avoid persisting reusable credentials in readable remote URLs where the manager supports another mechanism. Review Homelable key exposure and rotation requirements, including effects on existing sessions and MCP clients. Check whether old credentials also appear in private logs, backups, or Git history; document locations without copying values here.
+Rotated Homelable's signing secret, MCP API key, backend service key and local password through its saved Komodo environment and protected local source. All three containers run; new login and MCP initialization succeeded, and old signing/MCP/service credentials were rejected. Existing sessions and old external MCP keys need the new credentials. Retrieve them locally from `/home/trappserver/credential-hardening-20261002/new-access.json`; never publish its contents.
 
-- [ ] **Done when:** Only intended accounts can read credential-bearing files, replaced credentials are revoked, deployments still authenticate, and the next Komodo refresh does not recreate the exposure.
+**Deferred by request:** The exposed Git token remains active because the private configuration repository still depends on it. Replacement deploy-key creation was denied by GitHub; no registered replacement exists. Do not mark this item complete until private-repository access has a working replacement and the old token is revoked. Sensitive before-state copies and identified historical locations remain owner-only in `/home/trappserver/credential-hardening-20261002/`; they must not be copied into documentation or shared logs.
 
-### 03. Treat Docker management and MCP tools as privileged access
-
-**Evidence — confirmed mounts and listeners; authorization needs verification:** Portainer, Komodo Periphery, and Watchtower mount the Docker socket. The Komodo MCP server publishes host port `8003`; Homelable MCP publishes `8001`. Socket access can permit control of the host through Docker. MCP authentication and effective tool permissions were not tested. See [Docker daemon security](https://docs.docker.com/engine/security/).
-
-**Suggested fix:** Keep management tools on a trusted network/VPN and verify authentication, account permissions, and token scopes. Give MCP integrations only the access they need and separate read-only inventory use from deployment or destructive actions where supported. Keep socket mounts only on components that require them; a read-only bind flag alone is not a Docker API authorization policy.
-
-- [ ] **Done when:** Unauthenticated requests are rejected, each integration has documented permissions, and Docker control is available only to trusted administrators and required services.
+- [ ] **Remaining:** Replace private-repository authentication, revoke the exposed Git token, and review retention of protected historical copies.
 
 ## P1 — databases and recovery
 
-### 07. Prove backup coverage and restores
+### 07. Prove backup coverage and restores (Coverage documented; clarification needed)
 
-**Evidence — needs verification:** CrashPlan is running and local application backup files exist, but the documented review did not verify selections, destinations, retention, or restores. Local copies do not establish off-host recovery. Important data lives in both bind mounts and named Docker volumes.
+**Requested scope — 2026-10-02:** Created the [backup coverage register](/operations/backup-coverage), mapping databases, uploads, external libraries, named volumes, native/off-host services, host rebuild configuration and credential recovery. It records supported backup methods, artifact dates and historical restore evidence without treating file timestamps as successful backups.
 
-**Suggested fix:** Build a coverage list for Komodo configuration/MongoDB, rankings MongoDB, Immich database/uploads/external libraries, Paperless documents/database, Plex metadata, Tandoor, TeslaMate, Home Assistant, and UniFi. Include the configuration and protected credentials needed to rebuild the host. Use application-supported database backups or coordinated snapshots. Record the last successful backup and restore test; keep an isolated or off-host copy and protect its credentials.
+**No tests performed:** No backup job, restore, archive validation, database test, schedule activation or service restart was performed for this item. Existing Komodo exports, Immich database artifacts and Plex database pairs were identified. Paperless exports are empty; a production rankings archive was not identified. Off-host copies, retention, alerting and Home Assistant/UniFi backup evidence remain unconfirmed.
 
-- [ ] **Done when:** You can restore one representative service into an isolated environment, every critical data set has an owner and schedule, and missing/failed backups generate an alert.
+**Needs clarification:** Supply an independent destination, retention/capacity policy, credential escrow and any permitted maintenance window before enabling missing automation. Preserve source data and earlier recovery copies. The private working register is at `/home/trappserver/backup-coverage-20261002/coverage.md`.
 
-See [Backups, power, and storage](/infrastructure/host-reliability) and [recovery data by service](/operations/services#backup-and-recovery-planning).
+- [ ] **Remaining:** Implement confirmed coverage and off-host copies after destination/policy clarification. Restore proof remains deferred; no testing is authorized by this request.
 
 ## P2 — security and operational consistency
 
-### 09. Complete the Blocky transition and reduce its privileges
+### 10. Verify certificates on internal upstream connections (Plan ready; trust scope needed)
 
-**Evidence — confirmed:** Blocky still runs with `privileged=true`, a writable configuration mount, DNS on all interfaces, and a published HTTP port. The [DNS migration reference](/infrastructure/caddy#blocky-migration-context) describes it as temporary compatibility for clients moving to UniFi DNS.
+**Investigated — 2026-10-02:** UniFi at `192.168.1.1:443` serves a Cloudflare client-authentication certificate with no SAN and no server-auth purpose. Trusting its issuer cannot make it a valid server certificate. Caddy's UniFi upstream still uses HTTP, which redirects to the frontend hostname and may loop. DNS sync and the connector currently disable verification; enabling it immediately would break their access.
 
-**Suggested fix:** First identify remaining DHCP or manually configured clients that still need Blocky. If it remains necessary, test operation without full privileges, keep only required capabilities, make configuration read-only where possible, and restrict DNS/HTTP access to intended networks. If it is no longer needed, retire it through its owning deployment after verifying client migration.
+The [UniFi HTTPS plan](/infrastructure/unifi-https) covers supported certificate replacement, verified Caddy upstream TLS, scoped trust for automation, client/browser trust, renewal and rollback. The DNS sync now accepts `UNIFI_NETWORK_CA_FILE` while retaining normal roots; its current configuration still works in a dry run. Gateway certificate activation, Caddy transport and connector verification were left pending.
 
-- [ ] **Done when:** Client DNS works after the planned transition and no retained compatibility service has unexplained full privileges or unintended resolver exposure.
+**Needs clarification:** Warning-free `https://192.168.1.1` requires a private-CA server certificate with IP SAN `192.168.1.1` and trust on each intended browser/device. Identify those clients and CA/renewal ownership. A publicly trusted hostname is an alternative, but does not fix warnings at the private IP. Confirm the console's supported certificate UI and rollback path before activation.
 
-### 10. Verify certificates on internal upstream connections
-
-**Evidence — confirmed configuration/documentation:** The UniFi upstream has no explicit HTTPS transport. The documented UniFi DNS automation disables controller certificate verification. Caddy's former Portainer route used `tls_insecure_skip_verify`; that route was removed on 2026-09-30.
-
-**Suggested fix:** Use a certificate and hostname that clients can verify, or trust a suitable private CA in the relevant client. Configure upstream TLS intentionally. Coordinate trust changes with the DNS sync and other integrations so they continue working. Browser-facing Caddy HTTPS does not secure every upstream hop. See [Caddy transport options](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#the-http-transport).
-
-- [ ] **Done when:** Proxy and automation connections verify the intended server identity, no skip-verification exception remains unexplained, and DNS automation still succeeds.
+- [ ] **Remaining:** Install a suitable server certificate and client trust, then enable verified TLS on Caddy and all automation while preserving access.
 
 ### 11. Review public app authentication and ingress paths
 
@@ -102,7 +90,7 @@ See [Backups, power, and storage](/infrastructure/host-reliability) and [recover
 | Printing and discovery | Native CUPS and Avahi; CUPS advertises printers over DNS-SD | TCP `631` and UDP `5353` on wildcard addresses |
 | Desktop and backup | GNOME Remote Desktop service and CrashPlan are running; map their process sockets and confirm whether remote access is required | Remote-desktop and other host listeners need process-level attribution |
 | Media and HomeKit | Native Plex and host-network Homebridge | Plex TCP `32400`; Homebridge UI `8581`; additional discovery ports depend on its plugins |
-| Proxy and DNS | Host-network Caddy and Docker-published Blocky | TCP `80/443`; DNS TCP/UDP `53`; Blocky UI TCP `4001` |
+| Proxy and DNS | Host-network Caddy and Docker-published compatibility DNS | TCP `80/443`; DNS TCP/UDP `53`; no DNS HTTP interface |
 | Docker application ports | Published by the named stacks in the [container inventory](/services/overview); management includes Komodo `9120`, and direct app ports include `2283`, `3001`, `3002`, `3005`, `3030`, `3080`, `3579`, `5055`, `5800`, `6246`, `6881`, `7878`, `8001`–`8003`, `8010`, `8085`–`8087`, `8112`, `8181`, `8282`, and `8989` | Most publish on both IPv4 and IPv6 wildcard addresses; check each deployment before changing a mapping |
 
 **SSH policy verified from the readable server configuration:** The effective OpenSSH settings were evaluated with a temporary test host key for `trappserver` and `ai-agent`. Ordinary users have `PasswordAuthentication yes`, public-key authentication enabled, keyboard-interactive authentication disabled, and `PermitRootLogin prohibit-password` (reported as `without-password`). The `ai-agent` match requires a public key, disables password authentication and forwarding. TCP `22` listens on both wildcard families. Fail2Ban is running, and its resolved on-disk configuration contains the SSH jail with five retries in ten minutes and a ten-minute ban. The live jail/ban state could not be read without root access.

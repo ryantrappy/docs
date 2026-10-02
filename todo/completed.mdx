@@ -120,3 +120,23 @@ Completed items moved from the [active checklist](/todo/security-and-consistency
 **Rollback reference:** `/home/trappserver/komodo-migration/ddclient-config-before-disable-20261002` is a private credential-bearing backup. Review DNS ownership before re-enabling a second updater.
 
 - [x] **Complete:** Cloudflare DDNS is the sole updater for public server A records.
+
+### 03. Treat Docker management and MCP tools as privileged access (Completed)
+
+- [x] **Complete — 2026-10-02:** Extended the existing persistent host policy to Homelable MCP `8001`, backend `8002` and Komodo MCP `8003`. Direct access is limited to `192.168.1.0/24`, host loopback and trusted server-local Docker integrations. Remote IPv6 is blocked under the current IPv4-only management policy. Komodo `9120` remains protected.
+
+**Authentication and permissions:** Unauthenticated MCP initialization returned HTTP 401 on both endpoints. Komodo MCP uses per-user local/OAuth identity, derives read/operate/admin scopes from Komodo permissions and enforces resource access. Created `homelab-inventory`, enabled but not admin or super-admin, with only Read on Server, Stack and Repo and no create privileges. Login/read succeeded, derived scope was only `komodo:read`, and a stack write was denied for insufficient permissions. Retrieve this inventory login locally from `/home/trappserver/management-access-20261002/inventory-access.json`.
+
+Homelable's shared MCP API key grants application tool access, with a separate backend service key; it has no configured per-key inventory-only scope. Treat it as privileged Homelable access and keep it in the protected credential store. The existing Komodo deployment/bootstrap credential belongs to the super-admin `trappserver` account and remains privileged to preserve deployment workflows; keep it out of inventory clients. OAuth administrators retain intentional deployment permissions. Host-local Docker access and Docker-group membership remain administrator-equivalent.
+
+**Socket consumers:** Removed the already-stopped Portainer, Watchtower and historical Watchtower containers. Persistent volumes and source/rollback archives remain. Periphery is the sole remaining socket-mounted container and requires Docker control for deployment. The MCP container has no Docker socket mount. A read-only socket bind is not an API authorization boundary.
+
+**Verification and rollback:** Synthetic untrusted IPv4/IPv6 probes timed out on TCP `53,8001,8002,8003,9120`; LAN-source probes connected. Public HTTPS returned 200 on both families. No production Docker restart was required. Results, prior firewall source and protected retired-container definitions are in `/home/trappserver/management-access-20261002/`. Reintroducing a VPN or IPv6 management range requires an explicit policy update.
+
+### 09. Remove Blocky and preserve client DNS (Completed)
+
+- [x] **Complete — 2026-10-02:** Removed the Blocky container and its HTTP listener. The saved Komodo stack is retired with `restart: no`, a `retired` profile, and automatic updates, polling and webhooks disabled. Its original configuration is retained for recovery.
+
+UniFi `192.168.1.1` is the DHCP/default resolver; the LAN has no active IPv6 addressing. To preserve manually configured clients, the Komodo `dns-compatibility` stack forwards DNS at `192.168.1.236:53` exclusively to UniFi. It runs as `65534:65534`, drops all capabilities, enables no-new-privileges, uses a read-only root/config, and exposes no HTTP interface. DNS TCP/UDP is bound to the LAN address and protected by the persistent host LAN policy.
+
+**Verification:** Forwarding passed over UDP and TCP before and after cutover; public and local names resolved, and Komodo reports the saved replacement stack running. Configuration/build source is `/home/trappserver/Documents/dns-compatibility/`; private before-state is under `/home/trappserver/management-access-20261002/`. Renew leases and change manually configured clients to the gateway; keep the restricted forwarder until remaining dependencies are known. See [Networking and DNS](/services/networking#blocky-removal).

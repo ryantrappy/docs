@@ -12,7 +12,7 @@ icon: "compass"
 | --- | --- | --- |
 | Komodo | [komodo.ryantr.app](https://komodo.ryantr.app) | Manage stacks, deployments, and container logs. LAN; configured remote tunnel uses Authelia. |
 | Uptime Kuma | [uptime.ryantrapp.com](https://uptime.ryantrapp.com) | Service monitoring. Authelia. |
-| UniFi | [unifi.ryantr.app](https://unifi.ryantr.app) | Network management. LAN; gateway also at [192.168.1.1](https://192.168.1.1). |
+| UniFi | [unifi.ryantr.app](https://unifi.ryantr.app) | Network management. LAN; gateway also at [192.168.1.1](https://192.168.1.1). [Certificate replacement pending](/infrastructure/unifi-https). |
 | Home Assistant | [ha.ryantr.app](https://ha.ryantr.app) | Home automation. Authelia; runs on a separate device. |
 | Homebridge | [homebridge.ryantr.app](https://homebridge.ryantr.app) | HomeKit bridge and plugins. LAN. |
 | Paperless | [paperless.ryantr.app](https://paperless.ryantr.app) | Documents and search. Authelia. |
@@ -46,7 +46,6 @@ Use these addresses from the LAN for services without a Caddy hostname. These di
 | Duplicate finder | [192.168.1.236:5800](http://192.168.1.236:5800/) | Czkawka browser interface. |
 | Paperless AI | [192.168.1.236:8087](http://192.168.1.236:8087/) | Document tagging companion. |
 | InfluxDB | [192.168.1.236:8086](http://192.168.1.236:8086/) | Network Optimizer's metrics database. |
-| Blocky | [192.168.1.236:4001](http://192.168.1.236:4001/) | DNS HTTP endpoint; gateway DNS is the primary resolver. |
 | Overseerr | [192.168.1.236:5055](http://192.168.1.236:5055/) | Published address did not respond at this check; [port mapping reference](/services/media#port-mappings-to-verify). |
 | TeslaMate Grafana | [192.168.1.236:3000](http://192.168.1.236:3000/) | Saved dashboard address; TeslaMate containers are currently stopped. |
 

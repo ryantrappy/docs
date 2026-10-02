@@ -77,7 +77,7 @@ A Caddy LAN guard only governs traffic that passes through Caddy. Direct host po
 
 ## Backup and recovery planning
 
-The mounts in each service reference identify storage that exists. They do not establish a working backup policy.
+The mounts in each service reference identify storage that exists. They do not establish a working backup policy. Use the [backup coverage register](/operations/backup-coverage) for recovery inputs, artifact evidence and gaps. The 2026-10-02 coverage work ran no backups or restore tests.
 
 | Service area | Recovery data to identify |
 | --- | --- |
@@ -101,3 +101,9 @@ Retain volume names and host paths when restoring. Removing a container does not
 ## Documentation after a change
 
 Record the new access path, image/release, deployment source, ports, data locations, dependencies, and verification date. Explain any remaining unknowns beside the affected service so the next maintenance task starts with useful evidence.
+
+## Privileged management access
+
+Docker control is host-administrator access. Periphery is the only retained socket-mounted container. Komodo and Homelable MCP require authentication and direct management ports are limited to LAN/server-local clients by the persistent host policy.
+
+Use the separate `homelab-inventory` login for read-only Server/Stack/Repo access through Komodo or MCP local OAuth login. Use an administrator identity only for intended deployments. The protected local inventory credentials are at `/home/trappserver/management-access-20261002/inventory-access.json`. Homelable MCP keys grant application tool access and have no configured per-key read-only scope. Never publish credentials or add the deployment super-admin token to an inventory client.

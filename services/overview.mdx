@@ -39,7 +39,8 @@ Each reference lists container names, image tags, networks, actual port mappings
 | Stack | Running containers | Source |
 | --- | --- | --- |
 | `arr_stack` | 7 | Saved Komodo Compose, including Maintainerr |
-| `blocky` | 1 | Saved Komodo Compose |
+| `blocky` | 0 | Retired; automatic updates/polling/webhooks disabled |
+| `dns-compatibility` | 1 | Saved Komodo Compose; gateway-only DNS forwarder |
 | `caddy-v2` | 1 | Saved Komodo Compose |
 | `cloudflare-ddns` | 1 | Saved Komodo Compose |
 | `cloudflared` | 1 | Saved Komodo Compose |
@@ -137,8 +138,8 @@ The formerly loose applications now have saved Komodo Compose sources. Historica
 - The rankings app has restart policy `no`. See [Personal apps](/services/personal).
 - TeslaMate support services are running without a logger container in the host inventory.
 - Tandoor's database location was not established.
-- Blocky is still running during the migration to gateway DNS.
-- Watchtower is stopped after migration to Komodo; application backup coverage and full recreation tests remain to be verified.
+- Blocky was removed on 2026-10-02; a restricted gateway-only DNS forwarder preserves manually configured clients at the old address.
+- Retired Portainer/Watchtower containers were removed on 2026-10-02; data and deployment archives remain. Komodo owns updates; application backup coverage and full recreation tests remain to be verified.
 - Home Assistant and UniFi are verified off-host endpoints; see [Homelab devices](/infrastructure/devices). Caddy's `ninja` route remains unmatched to a confirmed application. Scrutiny was deployed and verified on 2026-10-02; see [Scrutiny](/services/scrutiny).
 - Plex has one configured movie directory that did not exist at inspection. See [Plex](/services/plex). CrashPlan backup selections and successful restore coverage remain unverified.
 

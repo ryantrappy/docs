@@ -1,0 +1,60 @@
+---
+title: "UniFi HTTPS plan"
+description: "Replace the unsuitable controller certificate and coordinate verified proxy, automation and browser trust."
+icon: "lock"
+---
+
+
+Gateway/Caddy/connector investigation was read-only. The DNS sync now supports optional UNIFI_NETWORK_CA_FILE; its active verification setting is unchanged and a dry run succeeded.
+
+## Evidence
+
+- Gateway: UCG Max; MCP Network version 10.6.106. UniFi OS version not yet established.
+- 192.168.1.1:443 presents a Cloudflare CLIENT authentication leaf certificate, CN=Cloudflare, issuer Cloudflare Managed CA e2a8feb7751acd5a5c6fe8109f53440e. SAN absent; extended key usage clientAuth only; CA:FALSE. Valid 2025-11-02 through 2040-10-29. The same certificate is served with SNI unifi.ryantr.app.
+- SHA256 fingerprint EC:E5:66:B9:DD:9F:9D:9C:9B:C2:F0:82:59:FA:A5:B0:6D:72:77:B9:13:72:34:0E:28:FE:9D:88:6F:16:AA:01. Public certificate saved beside this plan. This is unsuitable as a server certificate; importing its issuer alone cannot fix missing SAN or wrong EKU.
+- openssl verification reports unknown issuer and unsuitable certificate purpose.
+- Caddy v2.11.4 route unifi.ryantr.app uses reverse_proxy 192.168.1.1, meaning HTTP/80. Gateway HTTP with Host unifi.ryantr.app returns 301 Location https://unifi.ryantr.app/. Thus the current proxy route likely repeatedly redirects to itself; direct HTTP returns Location https://192.168.1.1/.
+- sync_unifi_dns.py creates default system TLS trust context but sets check_hostname=False and CERT_NONE when UNIFI_NETWORK_VERIFY_SSL=false. Credentials are read from MCP config, with environment overrides. It now supports optional UNIFI_NETWORK_CA_FILE; active verification remains disabled. NoRedirect blocks credential-forwarding redirects. The connector also disables validation. Enabling validation now will break both clients.
+
+## Required decision before gateway mutation
+
+The literal URL https://192.168.1.1 requires an IP SAN 192.168.1.1 and a trusted server-auth certificate. RFC1918 addresses cannot use ordinary public CA certificates. Warning-free access therefore requires distributing a private CA root to each desired OS/browser/device; unknown or unmanaged clients will still warn. Establish which clients need trust, who holds the CA signing key, and renewal ownership. Do not install the currently served Cloudflare client certificate as a trusted CA.
+
+Preferred option if a hostname meets the need: keep public-CA HTTPS at https://unifi.ryantr.app and repair the backend with verified TLS. This removes client trust distribution for that URL but does not make the raw IP warning-free.
+
+## Supported mechanism
+
+Ubiquiti's official release notes confirm custom TLS web-management certificate upload from UniFi OS 4.1.9. Official documentation identifies Settings > Control Plane > Console > Certificates (document context is UniFi OS Server; verify this UCG Max's installed OS and UI before using). Use this supported console UI instead of filesystem replacements, SSH enablement, or service restarts. Check installed version, current certificate selection, export/rollback ability, and whether changing the console certificate also affects SSL inspection before activation.
+
+Sources:
+- https://community.ui.com/releases/UniFi-OS-Cloud-Gateways-4-1-9/10ac13d7-188a-4bc9-b83e-53239a9ca0e9?page=3
+- https://help.ui.com/hc/en-us/articles/34210126298775-Self-Hosting-UniFi
+- https://help.ui.com/hc/en-us/articles/18068491373975-UniFi-Gateway-SSL-Traffic-Deep-Inspection
+- https://caddyserver.com/docs/caddyfile/directives/reverse_proxy
+- https://letsencrypt.org/documents/isrg-cp-v2.0/ (reserved IP restriction; public IP issuance is now separately available and does not cover 192.168.1.1)
+
+## Reversible implementation sequence (needs client trust scope and supported certificate activation path)
+
+1. Save current certificate selection and supported rollback path, protected config backups, verified local-admin access, and current connector/sync health. Keep an existing authenticated console session and second independent administrative access path. Do not revoke/delete the old certificate until all checks pass.
+2. For raw IP: create or select a dedicated privately managed CA; protect its signing key separately. Issue a server-auth leaf with SAN IP:192.168.1.1 and DNS:unifi.ryantr.app, CA:FALSE, suitable key usage, and bounded validity/renewal schedule. Verify chain, SAN, purpose, and key correspondence locally. Upload leaf/chain/private key through supported UniFi Certificates UI and activate only after warning about brief management disruption and potential inspection coupling.
+3. Install only CA public root in agreed client trust stores. Firefox may use its own roots; mobile devices may require explicit full trust. Unmanaged clients cannot be guaranteed warning-free. Confirm browsers at raw IP before changing application clients.
+4. Bind-mount public root read-only into Caddy, keeping existing volume configuration. Replace only UniFi proxy upstream with the following (retain internal-only guard):
+
+```caddyfile
+reverse_proxy https://192.168.1.1 {
+    transport http {
+        tls_trust_pool file /etc/caddy/pki/unifi-root.pem
+        tls_server_name unifi.ryantr.app
+    }
+    header_up Host unifi.ryantr.app
+}
+```
+
+No tls_insecure_skip_verify. Before reload run caddy adapt --validate against actual image, check raw-IP certificate with openssl s_client -verify_return_error -verify_ip 192.168.1.1 -CAfile root.pem, and verify hostname separately. Retaining hostname Host avoids IP redirects; test actual gateway response before finalizing header policy. Caddy 2.11 automatically adjusts Host for HTTPS upstreams, so explicit Host preserves the desired frontend name.
+5. Sync: the dedicated UNIFI_NETWORK_CA_FILE option now loads context.load_verify_locations(cafile=...) while retaining default roots; leave hostname validation enabled. Set VERIFY_SSL=true only after successful unauthenticated SSL handshake from the actual execution environment, then test sync --dry-run. Alternatively add root to approved system store, but scoped CA loading is preferable. Connector: establish supported custom-CA configuration from installed server implementation/docs before changing VERIFY_SSL=true; trust must exist in its actual process/container, not merely the shell. An SSL_CERT_FILE environment override may work but must be verified for this implementation before use.
+6. Validate login/logout, Network UI/API, websocket/live status, proxy without repeated redirects, DNS sync dry run and scheduled run, connector read-only health, remote-management fallback, and certificate expiry monitor. Ensure other internal services and LAN guard behavior remain functional.
+7. Rollback: restore Caddy and compose files/reload, restore previous sync/connector settings and restart only their process if necessary, select previous gateway certificate through supported UI. Roll back gateway first if certificate activation blocks clients; restore connector validation flag only temporarily for recovery, record it as unresolved. Root-trust removal is per client only after no service depends on it.
+
+## Hostname-only alternative
+
+Upload a properly issued publicly trusted server certificate for a dedicated controller name such as gateway.ryantr.app (DNS-01 permits internal service names within public registered domains). Keep unifi.ryantr.app DNS aimed at Caddy and dial fixed 192.168.1.1 upstream with tls_server_name gateway.ryantr.app; otherwise pointing the proxy upstream at unifi.ryantr.app could loop back to Caddy. Ensure Host header and redirects work. Configure connector/sync to use gateway hostname resolved directly to gateway and validation=true. Public certificate renewal/deployment remains necessary. This can repair verified proxy access without private root distribution, but does not meet literal IP URL requirement.
