@@ -1,0 +1,62 @@
+---
+title: "Scrutiny disk monitoring"
+description: "SMART monitoring for all physical drives, managed in Komodo with persistent configuration and InfluxDB data."
+icon: "hard-drive"
+---
+
+Open [Scrutiny](https://scrutiny.ryantr.app) from the LAN for disk health, temperatures, and SMART history. The `scrutiny` stack runs on Komodo's **Local** server.
+
+## Deployment
+
+Deployed and verified on **2026-10-02**, using the upstream [omnibus Compose example](https://raw.githubusercontent.com/AnalogJ/scrutiny/refs/heads/master/docker/example.omnibus.docker-compose.yml) as the base.
+
+| Setting | Value |
+| --- | --- |
+| Image | `ghcr.io/analogj/scrutiny:nightly-omnibus` |
+| Container / Komodo stack | `scrutiny` |
+| Web listener | `127.0.0.1:8081 → 8080`; existing Caddy LAN route |
+| Bundled InfluxDB listener | `127.0.0.1:8088 → 8086`; host port 8086 belongs to Network Optimizer |
+| Configuration and SQLite data | `/home/trappserver/Documents/scrutiny/config → /opt/scrutiny/config` |
+| InfluxDB data | `/home/trappserver/Documents/scrutiny/influxdb → /opt/scrutiny/influxdb` |
+| Device metadata | `/run/udev → /run/udev`, read-only |
+| Capabilities | `SYS_RAWIO`, plus `SYS_ADMIN` for NVMe SMART queries |
+| Restart policy | `unless-stopped` |
+| Collection schedule | Daily at midnight in the container's time zone: `COLLECTOR_CRON_SCHEDULE=0 0 * * *` |
+| Automatic updates | Disabled; apply updates through Komodo |
+| Local Compose reference | `/home/trappserver/Documents/scrutiny/compose.yaml`; active definition saved in Komodo |
+
+The existing configuration and InfluxDB data were preserved. The private pre-deployment backup is at `/home/trappserver/komodo-migration/scrutiny-backup-20261002/config-influxdb-before-deploy.tar.gz`.
+
+## Monitored physical drives
+
+All **11 currently attached physical drives** reported fresh SMART metrics on **2026-10-02**. Loop devices and partitions are excluded.
+
+| Device | Model | Transport | Approximate size |
+| --- | --- | --- | --- |
+| `/dev/sda` | HUH721212ALE601 | SATA | 10.9 TiB |
+| `/dev/sdb` | WDC WD40EFRX-68N32N0 | SATA | 3.6 TiB |
+| `/dev/sdc` | WDC WD30EFRX-68EUZN0 | SATA | 2.7 TiB |
+| `/dev/sdd` | ST6000VN001-2BB186 | SATA | 5.5 TiB |
+| `/dev/sde` | WDC WD30EFRX-68EUZN0 | SATA | 2.7 TiB |
+| `/dev/sdf` | WDC WD20EFAX-68FB5N0 | SATA | 1.8 TiB |
+| `/dev/sdg` | WDC WD30EFRX-68EUZN0 | SATA | 2.7 TiB |
+| `/dev/sdh` | WDC WD20EFRX-68EUZN0 | SATA | 1.8 TiB |
+| `/dev/sdi` | WDC WD40EZRZ-00GXCB0 | USB | 3.6 TiB |
+| `/dev/sdj` | WDC WD140EDGZ-11B2DA2 | USB | 12.7 TiB |
+| `/dev/nvme0n1` | PCIe SSD | NVMe | 465.8 GiB |
+
+The container receives `/dev/sda` through `/dev/sdj`, `/dev/nvme0n1`, and the `/dev/nvme0` controller. Scrutiny reports the SSD as `nvme0`. An older drive record remains in the preserved database; its stale collection date distinguishes it from the 11 current disks.
+
+## Collect and check
+
+Run a manual collection:
+
+```sh
+docker exec scrutiny /opt/scrutiny/bin/scrutiny-collector-metrics run
+```
+
+The existing `/home/trappserver/Documents/scrutiny/scrutiny_manual_trigger.sh` now runs this command against the Komodo-managed container.
+
+Check the dashboard's latest collection times after changing disks. Device names can change after a reboot or hardware change; review the stack's device mappings when adding or replacing a drive.
+
+**Verification:** Komodo reported the service **Running**; the Scrutiny health API returned success; the HTTPS Caddy route returned HTTP 200; all 11 current disks had fresh metrics. Notification delivery and reboot behavior were not tested.

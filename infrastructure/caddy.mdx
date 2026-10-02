@@ -124,7 +124,7 @@ The apex and `www` hostnames for both domains serve `/srv`, backed by `/var/www`
 
 Unmatched hostnames inside either domain block return `404 Not found`.
 
-The separate HTTP route for `trappserver.duckdns.org` redirects to `https://192.168.1.253:443{uri}`. This is a distinct configured destination from the Caddy host at `192.168.1.236`.
+The obsolete `trappserver.duckdns.org` HTTP redirect was removed on **2026-10-02**. Caddy was validated and reloaded; this hostname no longer has a configured redirect to the Home Assistant instance.
 
 ## Shared authentication with Authelia
 

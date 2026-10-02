@@ -8,6 +8,8 @@ The Docker host at `192.168.1.236` had **44 running containers** in the **2026-0
 
 **Ownership update — 2026-09-30:** Komodo now has **22 saved stacks**, including **20 running application stacks** covering **39 application containers**. The other three running containers are Komodo core, periphery, and MongoDB, kept on an independent bootstrap Compose file. Portainer and Watchtower are stopped. The detailed container table below remains a dated 2026-09-28 snapshot; use Docker and Komodo for current runtime status.
 
+**Scrutiny update — 2026-10-02:** Added the `scrutiny` Komodo stack. [Scrutiny](https://scrutiny.ryantr.app) now monitors all 11 attached physical drives with fresh SMART metrics; see [deployment and drive details](/services/scrutiny).
+
 ## Native and off-host services
 
 The homelab also includes services outside Docker, verified on **2026-09-28**:
@@ -51,6 +53,7 @@ Each reference lists container names, image tags, networks, actual port mappings
 | `network-optimizer` | 3 | Saved Komodo Compose |
 | `paperless` | 4 | Saved Komodo Compose, including Paperless AI |
 | `qbittorrent` | 1 | Saved Komodo Compose |
+| `scrutiny` | 1 | Saved Komodo Compose; added 2026-10-02 |
 | `tandoor` | 1 | Saved Komodo Compose |
 | `teslamate` | 3 | Saved Komodo Compose |
 | `uptime-kuma` | 1 | Saved Komodo Compose |
@@ -136,7 +139,7 @@ The formerly loose applications now have saved Komodo Compose sources. Historica
 - Tandoor's database location was not established.
 - Blocky is still running during the migration to gateway DNS.
 - Watchtower is stopped after migration to Komodo; application backup coverage and full recreation tests remain to be verified.
-- Home Assistant and UniFi are verified off-host endpoints; see [Homelab devices](/infrastructure/devices). Caddy's `ninja` and `scrutiny` routes remain unmatched to a confirmed application.
+- Home Assistant and UniFi are verified off-host endpoints; see [Homelab devices](/infrastructure/devices). Caddy's `ninja` route remains unmatched to a confirmed application. Scrutiny was deployed and verified on 2026-10-02; see [Scrutiny](/services/scrutiny).
 - Plex has one configured movie directory that did not exist at inspection. See [Plex](/services/plex). CrashPlan backup selections and successful restore coverage remain unverified.
 
 ## Inventory boundaries
