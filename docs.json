@@ -24,6 +24,13 @@
         ]
       },
       {
+        "group": "Changelog",
+        "icon": "clock-rotate-left",
+        "pages": [
+          "changelog"
+        ]
+      },
+      {
         "group": "Infrastructure",
         "icon": "server",
         "pages": [
