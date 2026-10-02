@@ -163,6 +163,8 @@ Invoice Ninja and recipes had existing upstream 502 responses before Authelia an
 
 ## Public DDNS coverage
 
+**Single updater — 2026-10-02:** Disabled and stopped the legacy Google Domains `ddclient.service`. Cloudflare DDNS remains running with restart policy `always`; all thirteen public server A records were audited against the current WAN IPv4 address. The saved Komodo stack's domain list matches that coverage. UniFi continues to own LAN DNS, and tunnel/Mintlify CNAMEs remain independent of DDNS.
+
 The Komodo `cloudflare-ddns` stack updates thirteen server A records: `ryantr.app`, `www.ryantr.app`, `ha`, `immich`, `minecraft`, `ninja`, `ombi`, `paperless`, `rankings`, `recipes`, and `tautulli` under `.ryantr.app`, plus `ryantrapp.com` and `www.ryantrapp.com`. A zone apex does not automatically include its subdomains; every managed hostname is listed explicitly in `DOMAINS`.
 
 The 2026-10-01 repair corrected eleven stale origins and preserved each record's proxy status and TTL. Minecraft and rankings remain unproxied. Tunnel and Mintlify CNAME records are independent of the WAN IP and remain outside DDNS.

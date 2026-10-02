@@ -14,7 +14,7 @@ Komodo confirms `cloudflared` and `cloudflare-ddns` as running stacks. Both use 
 
 A running tunnel connector does not establish that every Caddy hostname also has a tunnel route.
 
-The host also runs native `ddclient`; its protected configuration was not inspected. See [Native host services](/services/host#dynamic-dns). The [Homelab devices](/infrastructure/devices) page records the UniFi gateway, switches, access points, and reported uplinks.
+**DDNS update — 2026-10-02:** Native `ddclient` is stopped and disabled. The Komodo `cloudflare-ddns` stack is the sole public A-record updater, covering all thirteen current server records. All matched the current WAN IP. See [public DDNS coverage](/infrastructure/caddy#public-ddns-coverage) and [legacy updater retirement](/services/host#dynamic-dns). The [Homelab devices](/infrastructure/devices) page records the UniFi gateway, switches, access points, and reported uplinks.
 
 ## Blocky migration
 

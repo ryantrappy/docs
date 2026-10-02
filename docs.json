@@ -59,7 +59,8 @@
         "group": "TODO",
         "icon": "list-check",
         "pages": [
-          "todo/security-and-consistency"
+          "todo/security-and-consistency",
+          "todo/completed"
         ]
       }
     ]

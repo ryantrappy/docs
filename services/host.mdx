@@ -12,7 +12,7 @@ Trappserver runs applications and operational services directly on **Ubuntu 24.0
 | --- | --- | --- |
 | `plexmediaserver.service` | Media server | Running and enabled; account plex |
 | `crashplan.service` | Backup engine | Enabled; engine process present |
-| `ddclient.service` | Dynamic DNS | Running and enabled |
+| `ddclient.service` | Legacy Google Domains DDNS | Stopped and disabled on 2026-10-02 |
 | `pwrstatd.service` | CyberPower UPS management | Running and enabled |
 | `smartmontools.service` | Disk SMART monitoring | Running and enabled |
 | `fail2ban.service` | Authentication failure monitoring | Running and enabled |
@@ -25,9 +25,11 @@ Trappserver runs applications and operational services directly on **Ubuntu 24.0
 
 ## Dynamic DNS
 
-The native ddclient executable is `/usr/bin/ddclient`, package version **3.10.0-2**. Its configuration is `/etc/ddclient.conf`, which was protected from the current user's reads. Provider and target hostnames were not established.
+**Updated — 2026-10-02:** Cloudflare DDNS is the sole updater for public server A records. The Komodo `cloudflare-ddns` stack manages all thirteen current records; each matched the current WAN IPv4 address at verification.
 
-This daemon is independent of the Docker cloudflare-ddns stack described in [Networking and DNS](/services/networking). Check whether their target records overlap before changing either updater.
+The legacy `ddclient.service` used `protocol=dyndns2` with `domains.google.com` and was reporting failed updates. It is now stopped and disabled in systemd and legacy SysV startup. The installed package and configuration are retained for rollback; do not restart it alongside Cloudflare DDNS.
+
+The private pre-disable configuration backup is `/home/trappserver/komodo-migration/ddclient-config-before-disable-20261002`. See [public DDNS coverage](/infrastructure/caddy#public-ddns-coverage) for current hostnames. Retired public names are not recreated; internal service names remain owned by UniFi DNS.
 
 ## Terminal access and authentication monitoring
 

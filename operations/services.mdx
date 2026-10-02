@@ -23,12 +23,12 @@ Check the app's supporting database or broker too. Container health alone does n
 
 ## Inspect native and off-host services
 
-Plex, CrashPlan, UPS management, disk monitoring, SSH, and host dynamic DNS run directly on Ubuntu. Use [Native host services](/services/host) to identify their systemd units:
+Plex, CrashPlan, UPS management, disk monitoring, and SSH run directly on Ubuntu. Public dynamic DNS uses the Komodo `cloudflare-ddns` stack; native `ddclient` is stopped and disabled. Use [Native host services](/services/host) to identify their systemd units:
 
 ```sh
 systemctl status plexmediaserver.service crashplan.service --no-pager
 journalctl -u plexmediaserver.service -n 100 --no-pager
-systemctl status ddclient.service pwrstatd.service smartmontools.service --no-pager
+systemctl status pwrstatd.service smartmontools.service --no-pager
 systemctl status ssh.socket ssh.service --no-pager
 findmnt /media/internal/fourteenTB
 curl -I http://192.168.1.236:32400/web/
