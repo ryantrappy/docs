@@ -16,13 +16,13 @@ A running tunnel connector does not establish that every Caddy hostname also has
 
 **DDNS update — 2026-10-02:** Native `ddclient` is stopped and disabled. The Komodo `cloudflare-ddns` stack is the sole public A-record updater, covering all thirteen current server records. All matched the current WAN IP. See [public DDNS coverage](/infrastructure/caddy#public-ddns-coverage) and [legacy updater retirement](/services/host#dynamic-dns). The [Homelab devices](/infrastructure/devices) page records the UniFi gateway, switches, access points, and reported uplinks.
 
-## Blocky migration
+## Blocky removal
 
-Blocky is **still running** and reports healthy in this snapshot. It publishes DNS over TCP and UDP 53 and host port 4001 to container port 4000.
+**Removed — 2026-10-02:** Blocky and its HTTP listener are gone. Its saved Komodo stack is retired; configuration remains for recovery.
 
-The migration notes identify UniFi at `192.168.1.1` as the primary LAN DNS server. Blocky at `192.168.1.236` remains a compatibility resolver for old DHCP leases and manually configured clients, forwarding to the gateway. Review client migration before retiring it. See [Caddy's migration context](/infrastructure/caddy#blocky-migration-context).
+UniFi at `192.168.1.1` is the DHCP/default LAN DNS server. A restricted `dns-compatibility` Komodo stack preserves DNS TCP/UDP at `192.168.1.236:53` for manually configured clients and forwards only to the gateway. It uses CoreDNS 1.14.6, a non-root user, no capabilities, no-new-privileges, a read-only root/config and a 64 MiB limit. No HTTP port is published; host policy limits DNS to LAN and server-local clients.
 
-Its configuration is mounted from `/home/trappserver/Documents/blocky/config.yml`.
+Configuration and build source are in `/home/trappserver/Documents/dns-compatibility/`. UDP/TCP local-name and public-name forwarding succeeded, including after Komodo deployment. Change manually configured clients to gateway DNS before eventually removing this compatibility address. See [completed item 09](/todo/completed#09-remove-blocky-and-preserve-client-dns-completed).
 
 ## Network Optimizer
 

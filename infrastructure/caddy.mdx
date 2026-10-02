@@ -290,12 +290,12 @@ The DNS result should be `192.168.1.236`. The `--resolve` check bypasses DNS whi
 
 ## Blocky migration context
 
-The 2026-09-28 migration notes record UniFi providing LAN DNS and ad blocking, both WAN connections using automatic upstream DNS, and no Blocky dependency for Caddy certificate checks.
+UniFi provides LAN DNS and ad blocking. Both WAN connections use automatic upstream DNS; Caddy certificate checks use the configured Quad9 alternate port and have no Blocky dependency.
 
-Blocky was retained temporarily for clients with old DHCP leases or manually configured DNS at `192.168.1.236`. Its compatibility upstream forwards to `192.168.1.1`. DHCP leases were recorded as 24 hours.
+Blocky was removed on **2026-10-02**. A nonprivileged `dns-compatibility` stack preserves the old TCP/UDP DNS address `192.168.1.236:53`, forwarding exclusively to `192.168.1.1`. It has no HTTP interface. DHCP/default DNS is the gateway; manually configured clients can migrate without an immediate outage. See [Networking and DNS](/services/networking#blocky-removal).
 
-Renew leases or reconnect clients to obtain the gateway DNS address. Change manually configured clients separately. The notes say to stop Blocky only after those clients migrate. The subsequent container inventory on 2026-09-28 confirmed Blocky was still running and healthy; see [Networking and DNS](/services/networking).
+## Verified UniFi upstream TLS
 
-## Keep this reference current
+The controller currently serves a client-authentication certificate with no SAN, unsuitable for server HTTPS. The existing HTTP proxy hop can redirect back to the frontend hostname. Verification cannot be enabled safely until the certificate is replaced.
 
-Update this page when you change a hostname, upstream port, LAN subnet, Caddy image, mount, or DNS workflow. The configuration files remain the source of truth. Runtime checks for this page confirmed the Caddy version, Cloudflare module, host networking, mounts, and scheduled timer; they did not retest every application or public router rule.
+Follow the [UniFi HTTPS plan](/infrastructure/unifi-https) for supported certificate activation, verified Caddy transport, client trust, automation and rollback. The DNS sync supports optional `UNIFI_NETWORK_CA_FILE`, loaded in addition to default trust roots. Its current skip-verification setting remains until suitable trust is installed; a dry run still succeeded after the support was added.
