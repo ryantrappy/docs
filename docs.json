@@ -38,6 +38,7 @@
         "pages": [
           "services/overview",
           "services/plex",
+          "services/scrutiny",
           "services/host",
           "services/platform",
           "services/networking",
