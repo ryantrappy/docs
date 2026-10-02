@@ -24,7 +24,7 @@ A client resolves an application hostname, connects to Caddy on port 443, and Ca
 
 Host networking lets Caddy reach services on the server through `127.0.0.1`. Home Assistant and UniFi use separate LAN addresses.
 
-"Public" below means the route has no Caddy LAN guard. Internet reachability also depends on DNS, router rules, and the application's own authentication.
+"Public" below means the route has no Caddy LAN guard. Since 2026-10-01, public application browser routes require Authelia password and TOTP except resume pages, Ombi, and rankings. Native Home Assistant and Immich paths retain their app authentication. Internet reachability also depends on DNS and router rules. See the shared authentication policy below.
 
 ## Files and deployment
 
@@ -89,6 +89,7 @@ All names in this table end in `.ryantr.app`.
 | `recipes` | `127.0.0.1:8686` |
 | `paperless` | `127.0.0.1:8010` |
 | `immich` | `127.0.0.1:2283` |
+| `tautulli` | `127.0.0.1:8181` |
 
 ### LAN-only application routes
 
@@ -124,6 +125,47 @@ The apex and `www` hostnames for both domains serve `/srv`, backed by `/var/www`
 Unmatched hostnames inside either domain block return `404 Not found`.
 
 The separate HTTP route for `trappserver.duckdns.org` redirects to `https://192.168.1.253:443{uri}`. This is a distinct configured destination from the Caddy host at `192.168.1.236`.
+
+## Shared authentication with Authelia
+
+Authelia runs in its own Komodo stack, pinned to version 4.39.28 and the tested image digest. Its configuration, SQLite data, private secrets, and local account setup instructions live under `/home/trappserver/Documents/authelia`. The backend binds only to `127.0.0.1:9091`.
+
+| Route | Access policy |
+| --- | --- |
+| `ha.ryantr.app` | Authelia password and TOTP for browser routes; native `/api`, `/auth`, and static frontend assets retain app authentication or public static behavior |
+| `ninja.ryantr.app`, `recipes.ryantr.app`, `paperless.ryantr.app` | Authelia password and TOTP |
+| `immich.ryantr.app` | Authelia password and TOTP for browser routes; `/api` retains Immich authentication |
+| `uptime.ryantrapp.com` | Authelia password and TOTP |
+| `tautulli.ryantr.app` | Authelia password and TOTP |
+| External Cloudflare Tunnel access to `komodo.ryantr.app` | Authelia password and TOTP; direct LAN HTTPS keeps the existing LAN guard |
+| Resume pages, `ombi.ryantr.app`, `rankings.ryantr.app` | Existing public access and app login policies |
+| `auth.ryantr.app`, `auth.ryantrapp.com` | Public Authelia login portals; separate session cookies for the two domains |
+
+Protected handlers strip incoming `Remote-User`, `Remote-Groups`, `Remote-Email`, and `Remote-Name` headers, then call Authelia's `/api/authz/forward-auth` endpoint. Authelia requires the administrator group and two-factor authentication. Caddy trusts client-IP headers only from the loopback connector; remote LAN connectors retain their peer address for rate limiting. A stopped Authelia yields a 502 on gated applications; it does not grant access.
+
+### Cloudflare Tunnel ingress
+
+Two active connectors share the tunnel configuration. Uptime Kuma and Komodo formerly went directly to app ports. Their origins now use `http://192.168.1.236:9080`, along with both login portals. Caddy's port 9080 listener accepts loopback and LAN peers only. Its application handlers require Authelia, and unmatched hosts return 404. Using the LAN address allows both connector hosts to reach the origin.
+
+The new login DNS records are proxied CNAMEs to the existing tunnel. No router forwarding of port 9080 or the Authelia backend is needed.
+
+### Enrollment and recovery
+
+Use the private local `SETUP.md` for the initial password, authenticator QR, backup, and recovery procedure. Never publish secret values or QR content. Notifications currently go to a protected local file; SMTP is not configured. After enrolling the authenticator and saving the password, remove the bootstrap artifacts.
+
+Keep the prior Caddyfile and tunnel configuration snapshots under `/home/trappserver/authelia-setup`. A full rollback restores both configurations together. Direct LAN Komodo and local shell access provide an administrative recovery path.
+
+### Validation and limits
+
+Password authentication, password-only denial, TOTP access, logout, invalid native API token rejection, native Home Assistant authorization assets, and authentication-outage behavior were checked. The public login portal gives 200 and public Uptime Kuma redirects to Authelia. The public A-record audit found eleven hostnames still pointing to the old WAN IP because DDNS managed only the apex and Ombi. All thirteen server A records now match the current WAN IP, and the saved Komodo DDNS stack manages each hostname. Normal public HTTPS checks give Authelia redirects for Home Assistant, Immich, Paperless, Ninja, and recipes, and 200 for Ombi, rankings, and the apex/www resume sites. Tautulli's hostname now proxies to `127.0.0.1:8181` through an Authelia password-and-TOTP gate. Anonymous public requests redirect to Authelia; a verified two-factor session reaches Tautulli's own login redirect, and its backend login page returns 200. Test actual companion app login, refresh, and sync from your devices.
+
+Invoice Ninja and recipes had existing upstream 502 responses before Authelia and still return 502 after passing the gate. Track the remaining checks in [TODO item 21](/todo/security-and-consistency).
+
+## Public DDNS coverage
+
+The Komodo `cloudflare-ddns` stack updates thirteen server A records: `ryantr.app`, `www.ryantr.app`, `ha`, `immich`, `minecraft`, `ninja`, `ombi`, `paperless`, `rankings`, `recipes`, and `tautulli` under `.ryantr.app`, plus `ryantrapp.com` and `www.ryantrapp.com`. A zone apex does not automatically include its subdomains; every managed hostname is listed explicitly in `DOMAINS`.
+
+The 2026-10-01 repair corrected eleven stale origins and preserved each record's proxy status and TTL. Minecraft and rankings remain unproxied. Tunnel and Mintlify CNAME records are independent of the WAN IP and remain outside DDNS.
 
 ## LAN DNS and automatic additions
 
