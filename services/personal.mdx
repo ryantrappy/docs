@@ -18,7 +18,7 @@ The deployment uses n8n and task runners **2.41.6**, sandbox API/runner **1.6.0*
 
 **Saved and tested — 2026-10-03:** [Outlook email classifier](https://n8n.ryantr.app/workflow/wNJkClsD7uBVBgTX) now uses the existing Gmail account for a paginated, assistant-driven triage scaffold. Its name is retained for future account expansion. The unconfigured Outlook node is disabled and disconnected.
 
-The workflow remains **unpublished**, with MCP visibility enabled. Call it through the authenticated n8n MCP using manual execution; it has no schedule. Its existing webhook now accepts POST and returns the final JSON response. No production webhook was activated.
+**Published by the owner and HTTP-tested — 2026-10-03:** The existing workflow version is now active, with MCP visibility enabled and no schedule. Its POST webhook returns the final JSON response. The LAN HTTPS endpoint is `https://n8n.ryantr.app/webhook/0bd15859-2d40-4a1c-88b4-1e14ca90661b`; send `{"account":"gmail","action":"fetch","pageSize":100}` to request up to 100 unread inbox messages. You can also call it through authenticated n8n MCP. The separate `/webhook-test/` URL requires a temporary listener and is not the published route.
 
 #### Fetch unread inbox pages
 
@@ -77,9 +77,13 @@ Results report `preview`, `kept`, `filed`, `error`, or `unknown`, with counts an
 
 #### Verification, limits, and rollback
 
+**100-message request and real HTTP webhook — 2026-10-03:** Manual MCP execution **6** and published HTTP webhook execution **8** both successfully requested `pageSize: 100`. The HTTP POST returned **200** in about **33 seconds**, with **73 unique unread inbox messages**, zero read errors, and no continuation token. All returned messages retained both UNREAD and INBOX. There were fewer than 100 matching messages at the time of the test; a full 100-result page was not exercised. The 1–100 limit and unread filter already existed, so no workflow parameters were changed.
+
+A nine-message dry-run in execution **7** proposed five existing-label filings and kept four important/uncertain messages. Existing labels were discovered live, including the owner's newly added labels. No Gmail modification node ran during these tests; no mail was moved or marked read. Message subjects, bodies, and credential-bearing links are excluded from this public test record.
+
 SDK and node configuration validation passed. Twelve focused behavior checks passed, covering defaults, invalid input, unsupported accounts, protected/uncertain messages, system-label refusal, important-content preservation, and preview behavior. Live MCP executions **1** and **2** retrieved two unread inbox messages each; the second page had distinct IDs. Execution **3** previewed one eligible promotion and kept one uncertain message. The modification node did not run, and no mail was moved. After the review fix, execution **4** retained the same preview and kept outcomes alongside a deliberately missing-message read error; execution **5** returned an empty filing result. Simulated modification timeouts returned unknown outcomes with rollback context.
 
-**Not tested/deferred:** Live label modification and inverse rollback, maximum-size pages/batches, Outlook and additional accounts, production publication, schedules, and production webhook access. These remain follow-ups; the scaffold is callable now through manual MCP execution.
+**Not tested/deferred:** Live label modification and inverse rollback, a full 100-result page, 100-decision filing batches, Outlook and additional accounts, and schedules. The published fetch webhook is verified; live filing remains a separate untested action.
 
 Source, verification script, and original workflow snapshot are under `/home/trappserver/n8n-gmail-scaffold-20261003/`. Restore the original nodes, connections, and settings from `workflow-before.json` through n8n or MCP if reverting. Workflow rollback does not undo any subsequent email filing; use the private per-message inverse label operations instead.
 
