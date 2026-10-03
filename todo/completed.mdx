@@ -9,7 +9,7 @@ Completed items moved from the [active checklist](/todo/security-and-consistency
 ### Gmail email-classifier scaffold (Completed)
 
 - [x] **Scaffold saved and tested — 2026-10-03:** Updated the existing [Outlook email classifier](https://n8n.ryantr.app/workflow/wNJkClsD7uBVBgTX) for the connected Gmail account. Added unread inbox pagination, existing-label discovery, assistant-submitted filing decisions, dry-run default, and fresh-message conservative eligibility checks. Disabled and disconnected the unconfigured Outlook step.
-- [x] SDK/node validation and twelve focused behavior checks passed. Two live two-message pages returned distinct unread inbox IDs. A live preview returned one proposed filing and one kept uncertain item; the modification node did not run. No mail was moved.
+- [x] SDK/node validation and twelve focused behavior checks passed. Two live two-message pages returned distinct unread inbox IDs. A live preview returned one proposed filing and one kept uncertain item; the modification node did not run. No mail was moved. A missing-message read test retained earlier results and an empty filing batch returned zero results; unknown-modification recovery was checked with simulated responses.
 - [x] Retained MCP visibility and an unpublished draft, and saved the original workflow snapshot and verification source under `/home/trappserver/n8n-gmail-scaffold-20261003/`.
 
 **Limits:** Live filing/rollback, production publication, maximum-size batches, and other accounts remain on the [active checklist](/todo/security-and-consistency#gmail-classifier-follow-ups). [Call contract, checks, and rollback](/services/personal#gmail-email-classifier-scaffold).

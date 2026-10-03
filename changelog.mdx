@@ -8,6 +8,15 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-03
 
+### Gmail-first MCP email-classifier scaffold
+
+- Updated [Outlook email classifier](https://n8n.ryantr.app/workflow/wNJkClsD7uBVBgTX) to fetch paginated unread Gmail inbox messages and discover existing user labels, then preview or apply assistant-submitted filing decisions. Reused the connected Gmail credential; disabled and disconnected the unconfigured Outlook step. The workflow remains an unpublished, MCP-visible draft callable with manual execution; its POST trigger returns final JSON. No schedule or production webhook was activated.
+- Filing defaults to dry-run, requires a high-confidence unimportant classification and an existing user label, and rechecks each message before adding that label and removing only INBOX. Unread status and other labels are preserved. Important, uncertain, protected, already-read, non-inbox, or potentially sensitive messages stay in place. Per-message errors and unknown writes retain earlier results and recovery context.
+- Updated the [n8n service reference](/services/personal#gmail-email-classifier-scaffold), [completed scaffold checklist](/todo/completed#gmail-email-classifier-scaffold-completed), and [active follow-ups](/todo/security-and-consistency#gmail-classifier-follow-ups).
+- **Checks:** SDK/node validation and twelve focused behavior checks passed. Live MCP executions 1 and 2 returned distinct two-message unread inbox pages with continuation tokens. Execution 3 previewed one eligible filing and kept one uncertain item; execution 4 retained those results alongside a missing-message read error; execution 5 returned an empty batch. The Gmail modification node did not run; no emails were moved.
+- **Skipped/deferred:** Live filing and inverse rollback, maximum-size pages/batches, Outlook/additional accounts, and production publication/access. Collect pages before applying filing decisions; discard old cursors after changing inbox membership. Inspect fresh labels before retrying an unknown write. The assistant performs classification; no additional AI provider was configured.
+- **Rollback:** Original workflow snapshot, saved source, and verification script are under `/home/trappserver/n8n-gmail-scaffold-20261003/`. Restoring the original workflow does not undo later email filing; keep per-message inverse operations private. Documentation publication is pending until this delivery's documentation PR is merged.
+
 ### n8n documentation conflict resolution
 
 - Reconciled [PR #24](https://github.com/ryantrappy/docs/pull/24) with the current main branch. Preserved both completed n8n entries and the earlier environment-repair history, and added the HTTPS access path to the existing service reference. No operational settings changed; the previously configured HTTP cookie setting remains unchanged.
