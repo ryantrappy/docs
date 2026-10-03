@@ -6,6 +6,10 @@ icon: "circle-check"
 
 Completed items moved from the [active checklist](/todo/security-and-consistency) on **2026-10-02**. Original task numbers, completion notes, and verification details are retained below. Items that still have unchecked completion criteria remain on the active checklist.
 
+### Add internal n8n HTTPS route (Completed)
+
+- [x] **Complete — 2026-10-03:** Added `n8n.ryantr.app` to Caddy with the existing LAN guard and HTTP upstream `192.168.1.163:5678` on the M1 Mac laptop. Added its UniFi A record to `192.168.1.236`. Validation/reload succeeded; LAN hostname HTTPS returned 200 with certificate verification, HTTP redirected to HTTPS, non-LAN loopback was rejected, and tunnel origin returned 404. No public record or tunnel route was added. Off-network access, laptop direct-port security, login and workflows were not tested. [Route details and rollback](/infrastructure/caddy#lan-only-application-routes).
+
 ### 02. Restrict direct management and application ports (Completed)
 
 - [x] **Complete — 2026-09-29:** Implemented the requested scope: remote direct access to applications marked `internal-only` in Caddy is restricted to **192.168.1.0/24**. Host loopback and server-local Docker bridge integrations remain trusted. Other TODO items were not remediated.

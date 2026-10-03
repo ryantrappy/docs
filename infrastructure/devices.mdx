@@ -14,6 +14,10 @@ Home Assistant is reachable on the LAN at [192.168.1.254:8123](http://192.168.1.
 
 Version, integrations, automations, backups, and authenticated application health were not inspected. Record the installation method and backup/restore procedure after checking Home Assistant's own administration interface.
 
+## M1 Mac laptop: n8n
+
+The user identifies `192.168.1.163` as the M1 Mac laptop running n8n on HTTP port `5678`. Since **2026-10-03**, [n8n](https://n8n.ryantr.app) uses Caddy's trusted wildcard HTTPS and a `192.168.1.0/24` peer guard. UniFi LAN DNS points the hostname to `192.168.1.236`; no public DNS record or tunnel handler was added. Both direct upstream HTTP and normal LAN hostname HTTPS returned 200. Keep the laptop awake and reachable; its deployment, version, backups, direct-port firewall, authentication and workflows were not inspected. See [Caddy setup](/infrastructure/caddy#lan-only-application-routes) for checks and rollback.
+
 ## SMLIGHT coordinator
 
 UniFi reported a wired device at `192.168.1.205` with hostname `SLZB-06U`. Its HTTP root page returned 200. The [SMLIGHT SLZB-06U product reference](https://smlight.tech/products/slzb-06u) identifies this model as an Ethernet Zigbee coordinator.
