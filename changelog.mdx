@@ -8,6 +8,11 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-03
 
+### n8n documentation conflict resolution
+
+- Reconciled [PR #24](https://github.com/ryantrappy/docs/pull/24) with the current main branch. Preserved both completed n8n entries and the earlier environment-repair history, and added the HTTPS access path to the existing service reference. No operational settings changed; the previously configured HTTP cookie setting remains unchanged.
+- Checked the merged documentation for conflict markers and preservation of both changes. No service tests were repeated for this documentation-only resolution. Publication remains pending until PR #24 is merged.
+
 ### LAN-only n8n HTTPS on the M1 Mac laptop
 
 - Added `n8n.ryantr.app` to [Caddy](/infrastructure/caddy#lan-only-application-routes), forwarding to `http://192.168.1.163:5678` with the existing `192.168.1.0/24` peer guard. Browser HTTPS uses the existing trusted wildcard certificate. Added one UniFi LAN A record to `192.168.1.236`, TTL 300; no public DNS record or Cloudflare Tunnel route was added.
@@ -17,6 +22,15 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 - **Rollback:** Restore `/home/trappserver/n8n-route-20261003/Caddyfile.before`, validate and reload Caddy, then manually remove the n8n UniFi record; the sync does not delete stale records. No container restart was needed.
 
 ## 2026-10-02
+
+### n8n environment repair and LAN HTTP access
+
+- Corrected the `n8n` stack Environment on Komodo Server `m1-mac` (`192.168.1.163`). Added the sandbox runner's required registration token alias, aligned n8n/API and API/runner key references, and configured n8n's external task runner mode and broker bind address. Existing Komodo secret values were reused.
+- Redeployed n8n and the affected sandbox services. Both JavaScript/Python launchers registered; the sandbox runner established its registration stream and prepared its sandbox image. The sandbox API is healthy. Live environment comparisons confirmed the expected shared keys; startup logs no longer contain the missing-registration-variable error.
+- Set `N8N_SECURE_COOKIE=false` at the owner's request and redeployed n8n for [LAN HTTP access](http://192.168.1.163:5678). Session cookies may travel over HTTP; restore secure cookies when using HTTPS.
+- Updated the [service reference](/services/personal#n8n-on-m1-mac), inventory and completed checklist. The protected configuration rollback snapshot is `/home/trappserver/n8n-environment-fix-20261002/stack-before.json`; restore its Environment through Komodo and redeploy if reverting. Deployment records and verification evidence are retained in that directory.
+
+**Checks and limits:** Both deployments completed successfully. Live n8n confirms secure cookies disabled and external runner mode; LAN editor, health and readiness endpoints returned HTTP 200 after redeployment. Container registration checks passed; the certificate initializer exited successfully as expected. Browser login, actual workflows, sandbox execution, SearXNG queries, reboot persistence and backup/restore tests were skipped. Assistant remains disabled and AI provider setup is deferred; no provider credentials were changed. No additional user action is needed for the repaired environment settings. **Publication pending:** Documentation is saved in [PR #23](https://github.com/ryantrappy/docs/pull/23). Mintlify preview deployment and link validation passed; spellcheck was skipped. GitHub denied the merge because the connected personal access token lacks merge permission. An authorized repository maintainer must merge the PR before these documentation changes are published.
 
 ### Documentation and change tracking
 
