@@ -8,6 +8,21 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-03
 
+### Gmail classifier documentation conflict resolution
+
+- Combined [PR #26](https://github.com/ryantrappy/docs/pull/26)'s Gmail scaffold documentation with main commit `e6235bc1f17e9ca6a7781c0e7a6a85084a65af12`, including the n8n MCP URL/authentication reference and completed checklist from [PR #25](https://github.com/ryantrappy/docs/pull/25). Preserved both sets of additions and earlier changelog history.
+- PRs #24 and #25 are now merged; their earlier pending-publication notes remain as historical records. This resolution changes documentation only; no service settings, workflows, or mailbox contents changed, and no service checks were repeated.
+- **Checks and publication:** Combined page contents contain no conflict markers and retain the Gmail call contract, rollback reference, MCP setup guidance, and completed items. Saved page changes through Mintlify on the existing PR #26 branch. The PR still requires an authorized merge to publish; the connected GitHub token was previously denied mergePullRequest. Local resolution source and original parent revisions are available under `/tmp/n8n-docs-pr26/`.
+
+### Gmail-first MCP email-classifier scaffold
+
+- Updated [Outlook email classifier](https://n8n.ryantr.app/workflow/wNJkClsD7uBVBgTX) to fetch paginated unread Gmail inbox messages and discover existing user labels, then preview or apply assistant-submitted filing decisions. Reused the connected Gmail credential; disabled and disconnected the unconfigured Outlook step. The workflow remains an unpublished, MCP-visible draft callable with manual execution; its POST trigger returns final JSON. No schedule or production webhook was activated.
+- Filing defaults to dry-run, requires a high-confidence unimportant classification and an existing user label, and rechecks each message before adding that label and removing only INBOX. Unread status and other labels are preserved. Important, uncertain, protected, already-read, non-inbox, or potentially sensitive messages stay in place. Per-message errors and unknown writes retain earlier results and recovery context.
+- Updated the [n8n service reference](/services/personal#gmail-email-classifier-scaffold), [completed scaffold checklist](/todo/completed#gmail-email-classifier-scaffold-completed), and [active follow-ups](/todo/security-and-consistency#gmail-classifier-follow-ups).
+- **Checks:** SDK/node validation and twelve focused behavior checks passed. Live MCP executions 1 and 2 returned distinct two-message unread inbox pages with continuation tokens. Execution 3 previewed one eligible filing and kept one uncertain item; execution 4 retained those results alongside a missing-message read error; execution 5 returned an empty batch. The Gmail modification node did not run; no emails were moved.
+- **Skipped/deferred:** Live filing and inverse rollback, maximum-size pages/batches, Outlook/additional accounts, and production publication/access. Collect pages before applying filing decisions; discard old cursors after changing inbox membership. Inspect fresh labels before retrying an unknown write. The assistant performs classification; no additional AI provider was configured.
+- **Rollback:** Original workflow snapshot, saved source, and verification script are under `/home/trappserver/n8n-gmail-scaffold-20261003/`. Restoring the original workflow does not undo later email filing; keep per-message inverse operations private. Documentation is saved through Mintlify in [PR #26](https://github.com/ryantrappy/docs/pull/26). Publication is blocked: GitHub rejected mergePullRequest because the connected personal access token lacks access. The PR remains open; an authorized GitHub user must merge it. Preview deployment and link checks passed; spellcheck was skipped.
+
 ### n8n MCP public URL repair
 
 - Set `N8N_EDITOR_BASE_URL=https://n8n.ryantr.app` in the n8n service environment of the saved Komodo Compose on `m1-mac`. This corrects MCP resource and OAuth URLs that previously advertised `http://localhost:5678`. The existing Codex MCP URL was already correct.

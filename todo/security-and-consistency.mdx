@@ -10,6 +10,15 @@ This checklist began with a **read-only review on 2026-09-29**, supplemented by 
 
 Keep secret values, recovery codes, and private keys out of this page. Recheck each finding before changing a service.
 
+## Gmail classifier follow-ups
+
+The [Gmail scaffold](/services/personal#gmail-email-classifier-scaffold) is saved, tested through manual MCP calls, and recorded on the [completed checklist](/todo/completed#gmail-email-classifier-scaffold-completed).
+
+- [ ] **Documentation publication:** Merge [PR #26](https://github.com/ryantrappy/docs/pull/26) with an authorized GitHub identity. Mintlify saved the changes and preview/link checks passed, but the connected token cannot merge the PR.
+- [ ] **Live filing/rollback:** Verify an explicitly applied existing-label filing and its inverse against current message state. The scaffold tests used previews only; no email was moved.
+- [ ] **Account expansion:** Add Outlook credentials and provider-specific unread pagination/folder mapping when an account is connected. Gmail is currently the only accepted account.
+- [ ] **Deferred validation:** Check maximum-size pages/batches. Production publication, schedules, and production webhook access were not requested and remain inactive.
+
 ## Suggested order
 
 | Priority | Start with |
