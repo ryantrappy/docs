@@ -8,6 +8,14 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-03
 
+### Gmail sample decisions applied
+
+- At the owner's request, published [email-classifier workflow](https://n8n.ryantr.app/workflow/wNJkClsD7uBVBgTX) execution **9** used `action: "file"` and explicit `dryRun: false` to apply five high-confidence unimportant sample decisions: three messages labeled Company Spam and two labeled Unimportant nextdoor, with INBOX removed. Four important/uncertain examples were not modified. This applied the reviewed sample, not the entire 73-message fetch.
+- **Checks:** Execution succeeded; Gmail confirmed all five target labels, UNREAD preserved, INBOX absent, every other prior label preserved, and zero errors/unknown outcomes. No mail was deleted, sent, or marked read. Workflow settings, credentials, and schedules were unchanged.
+- Updated [service call/verification notes](/services/personal#gmail-email-classifier-scaffold) and active/completed checklists. Earlier preview-only entries remain as history. Documentation PR #27 is now merged.
+- **Rollback and limits:** Owner-only results and inverse operations are at `/home/trappserver/n8n-gmail-scaffold-20261003/live-filing-9-private.json`; inspect current labels before restoring INBOX/removing the new label. No rollback was executed. Full 100-result pages, 100-decision batches, additional accounts, and schedules remain deferred. Private mail content and message IDs are excluded from this entry.
+- **Publication:** Saved through Mintlify in a follow-up documentation PR; main-site publication requires an authorized merge because the connected GitHub token cannot merge.
+
 ### Gmail webhook and unread-limit verification
 
 - Confirmed that [Outlook email classifier](https://n8n.ryantr.app/workflow/wNJkClsD7uBVBgTX) already accepts `pageSize` from 1 to 100 and always filters unread inbox mail. No workflow parameters or service settings were changed. The owner published the existing version; the original draft-only status is superseded by this verification.
