@@ -12,6 +12,8 @@ This reference covers rankings, recipes, Homebridge, and the running TeslaMate s
 
 The deployment uses n8n and task runners **2.41.6**, sandbox API/runner **1.6.0**, and SearXNG `latest`. Only n8n publishes host port `5678`; the broker and sandbox services communicate on `n8n_default`.
 
+**HTTPS access added — 2026-10-03:** Use [n8n.ryantr.app](https://n8n.ryantr.app) from the LAN. Caddy terminates trusted HTTPS and proxies to `192.168.1.163:5678` under the `192.168.1.0/24` guard. UniFi LAN DNS points to Caddy at `192.168.1.236`. The route change did not alter the existing `N8N_SECURE_COOKIE=false` environment setting; secure-cookie restoration remains a separate deployment change. See [Caddy route checks and rollback](/infrastructure/caddy#lan-only-application-routes).
+
 ### Environment relationships
 
 - `N8N_RUNNERS_MODE=external` and `N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0` allow the separate JavaScript/Python task runners to connect. Their `N8N_RUNNERS_AUTH_TOKEN` matches n8n's token.

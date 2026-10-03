@@ -106,6 +106,7 @@ The guard checks the directly connected peer's address. It aborts connections ou
 
 | Hostname | Upstream |
 | --- | --- |
+| `n8n` | `192.168.1.163:5678` (M1 Mac laptop) |
 | `watcharr` | `127.0.0.1:3080` |
 | `radarr` | `127.0.0.1:7878` |
 | `sab` | `127.0.0.1:8282` |
@@ -115,6 +116,8 @@ The guard checks the directly connected peer's address. It aborts connections ou
 | `scrutiny` | `127.0.0.1:8081` |
 | `maintainerr` | `127.0.0.1:6246` |
 | `unifi` | `192.168.1.1`, with no explicit upstream TLS transport |
+
+**n8n added — 2026-10-03:** Open [n8n](https://n8n.ryantr.app) from `192.168.1.0/24`. UniFi resolves its hostname to Caddy at `192.168.1.236` (TTL 300). Browser HTTPS uses the existing trusted wildcard certificate; Caddy forwards HTTP over the LAN to the user-identified M1 Mac laptop at `192.168.1.163:5678`. The hostname is absent from the tunnel origin handlers and has no public A answer. Caddy validation/reload, normal hostname HTTPS (200, certificate verification successful), HTTP-to-HTTPS redirect (308), non-LAN loopback rejection, and tunnel-origin rejection (404) were checked. No off-network test, n8n login/workflow/webhook test, or laptop direct-port/firewall audit was performed. The laptop must remain awake and reachable. Public webhook senders cannot use this LAN-only route. Rollback: restore `/home/trappserver/n8n-route-20261003/Caddyfile.before`, validate and reload Caddy, and remove the n8n UniFi record manually; DNS sync does not delete stale records.
 
 The Portainer `portainer` and `port` routes were removed on 2026-09-30 after the manager was stopped. Both hostnames now reach Caddy's unmatched-hostname `404` response.
 

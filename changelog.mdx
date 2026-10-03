@@ -6,6 +6,21 @@ icon: "clock-rotate-left"
 
 Use this log to see what changed and whether any follow-up affects you. Entries use UTC dates, with the newest first. Service references describe the current setup; this log preserves the change history.
 
+## 2026-10-03
+
+### n8n documentation conflict resolution
+
+- Reconciled [PR #24](https://github.com/ryantrappy/docs/pull/24) with the current main branch. Preserved both completed n8n entries and the earlier environment-repair history, and added the HTTPS access path to the existing service reference. No operational settings changed; the previously configured HTTP cookie setting remains unchanged.
+- Checked the merged documentation for conflict markers and preservation of both changes. No service tests were repeated for this documentation-only resolution. Publication remains pending until PR #24 is merged. The combined page content is saved through Mintlify. The locally verified merge commit is `cdc6042` in `/tmp/n8n-docs-pr24`; GitHub rejected its push with HTTP 403, so the PR still reports conflicts until an authorized writer pushes that merge commit. No repository history was rewritten.
+
+### LAN-only n8n HTTPS on the M1 Mac laptop
+
+- Added `n8n.ryantr.app` to [Caddy](/infrastructure/caddy#lan-only-application-routes), forwarding to `http://192.168.1.163:5678` with the existing `192.168.1.0/24` peer guard. Browser HTTPS uses the existing trusted wildcard certificate. Added one UniFi LAN A record to `192.168.1.236`, TTL 300; no public DNS record or Cloudflare Tunnel route was added.
+- Updated the [service links](/overview), [off-host device reference](/infrastructure/devices#m1-mac-laptop-n8n), Caddy route table, and [completed checklist](/todo/completed). Existing broader ingress/security checklist work remains open.
+- **Checks:** Upstream HTTP 200; Caddy validation and graceful reload succeeded; normal hostname LAN HTTPS 200 with certificate verification; HTTP redirects to HTTPS with 308; non-LAN loopback request aborted; tunnel origin returns 404. UniFi DNS resolves to Caddy, and sync readback reports no missing records. Public resolver returned no A answer.
+- **Skipped/deferred:** No off-network test, n8n login/workflow/webhook test, laptop direct-port firewall audit, or n8n deployment/environment change. Keep the laptop awake and reachable; use LAN DNS. External webhook senders cannot reach this internal route.
+- **Rollback:** Restore `/home/trappserver/n8n-route-20261003/Caddyfile.before`, validate and reload Caddy, then manually remove the n8n UniFi record; the sync does not delete stale records. No container restart was needed.
+
 ## 2026-10-02
 
 ### n8n environment repair and LAN HTTP access
