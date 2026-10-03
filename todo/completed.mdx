@@ -6,10 +6,10 @@ icon: "circle-check"
 
 Completed items moved from the [active checklist](/todo/security-and-consistency) on **2026-10-02**. Original task numbers, completion notes, and verification details are retained below. Items that still have unchecked completion criteria remain on the active checklist.
 
-### Repair n8n MCP public metadata (Server repair completed)
+### Repair n8n MCP public metadata and authentication (Completed)
 
 - [x] **2026-10-03:** Persisted the HTTPS editor base URL in the n8n service's Komodo Compose and successfully redeployed n8n. Protected-resource metadata exactly matches the Codex endpoint, OAuth discovery uses the HTTPS hostname, and editor/health/readiness return 200. Codex registered an OAuth client and reached authorization.
-- [ ] Interactive SSH-host OAuth login and authenticated MCP tool listing remain on the [active checklist](/todo/security-and-consistency#n8n-mcp-authentication-from-the-ssh-host). See [configuration and rollback](/services/personal#n8n-on-m1-mac).
+- [x] Completed server-side OAuth callback and verified a fresh Codex app-server initializes n8n with OAuth and lists **56 tools**. Reload/restart the existing Codex session to load the newly connected tools. No workflows were executed. See [configuration and rollback](/services/personal#n8n-on-m1-mac).
 
 ### Add internal n8n HTTPS route (Completed)
 
