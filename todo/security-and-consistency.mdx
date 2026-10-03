@@ -10,6 +10,12 @@ This checklist began with a **read-only review on 2026-09-29**, supplemented by 
 
 Keep secret values, recovery codes, and private keys out of this page. Recheck each finding before changing a service.
 
+## n8n MCP authentication from the SSH host
+
+- [x] **2026-10-03:** Corrected localhost MCP/OAuth discovery through the persisted Komodo public editor base URL; deployment and HTTPS discovery/health checks passed.
+- [ ] Complete `codex mcp login n8n --no-browser` on the SSH host: approve the generated link on the laptop, then paste the full callback URL into the waiting server terminal even if the localhost callback page fails.
+- [ ] Verify authenticated MCP initialization and tool listing after login. Workflow execution remains outside this repair. See [n8n MCP access](/services/personal#mcp-access-from-codex).
+
 ## Suggested order
 
 | Priority | Start with |

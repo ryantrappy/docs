@@ -6,6 +6,11 @@ icon: "circle-check"
 
 Completed items moved from the [active checklist](/todo/security-and-consistency) on **2026-10-02**. Original task numbers, completion notes, and verification details are retained below. Items that still have unchecked completion criteria remain on the active checklist.
 
+### Repair n8n MCP public metadata (Server repair completed)
+
+- [x] **2026-10-03:** Persisted the HTTPS editor base URL in the n8n service's Komodo Compose and successfully redeployed n8n. Protected-resource metadata exactly matches the Codex endpoint, OAuth discovery uses the HTTPS hostname, and editor/health/readiness return 200. Codex registered an OAuth client and reached authorization.
+- [ ] Interactive SSH-host OAuth login and authenticated MCP tool listing remain on the [active checklist](/todo/security-and-consistency#n8n-mcp-authentication-from-the-ssh-host). See [configuration and rollback](/services/personal#n8n-on-m1-mac).
+
 ### Add internal n8n HTTPS route (Completed)
 
 - [x] **Complete — 2026-10-03:** Added `n8n.ryantr.app` to Caddy with the existing LAN guard and HTTP upstream `192.168.1.163:5678` on the M1 Mac laptop. Added its UniFi A record to `192.168.1.236`. Validation/reload succeeded; LAN hostname HTTPS returned 200 with certificate verification, HTTP redirected to HTTPS, non-LAN loopback was rejected, and tunnel origin returned 404. No public record or tunnel route was added. Off-network access, laptop direct-port security, login and workflows were not tested. [Route details and rollback](/infrastructure/caddy#lan-only-application-routes).
