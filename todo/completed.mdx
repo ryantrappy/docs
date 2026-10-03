@@ -14,6 +14,11 @@ Completed items moved from the [active checklist](/todo/security-and-consistency
 
 **Limits:** Live filing/rollback, production publication, maximum-size batches, and other accounts remain on the [active checklist](/todo/security-and-consistency#gmail-classifier-follow-ups). [Call contract, checks, and rollback](/services/personal#gmail-email-classifier-scaffold).
 
+### Repair n8n MCP public metadata and authentication (Completed)
+
+- [x] **2026-10-03:** Persisted the HTTPS editor base URL in the n8n service's Komodo Compose and successfully redeployed n8n. Protected-resource metadata exactly matches the Codex endpoint, OAuth discovery uses the HTTPS hostname, and editor/health/readiness return 200. Codex registered an OAuth client and reached authorization.
+- [x] Completed server-side OAuth callback and verified a fresh Codex app-server initializes n8n with OAuth and lists **56 tools**. Reload/restart the existing Codex session to load the newly connected tools. No workflows were executed. See [configuration and rollback](/services/personal#n8n-on-m1-mac).
+
 ### Add internal n8n HTTPS route (Completed)
 
 - [x] **Complete — 2026-10-03:** Added `n8n.ryantr.app` to Caddy with the existing LAN guard and HTTP upstream `192.168.1.163:5678` on the M1 Mac laptop. Added its UniFi A record to `192.168.1.236`. Validation/reload succeeded; LAN hostname HTTPS returned 200 with certificate verification, HTTP redirected to HTTPS, non-LAN loopback was rejected, and tunnel origin returned 404. No public record or tunnel route was added. Off-network access, laptop direct-port security, login and workflows were not tested. [Route details and rollback](/infrastructure/caddy#lan-only-application-routes).
