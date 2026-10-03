@@ -8,6 +8,15 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-03
 
+### Broader Gmail triage and full fetched-batch filing
+
+- At the owner's request, lowered [email-classifier](/services/personal#gmail-email-classifier-scaffold) filing confidence from 0.95 to **0.70** and retained high-confidence personal importance at **0.90**. Optional `importanceConfidence` makes the distinction explicit. Gmail IMPORTANT and generic keyword matches no longer hold routine mail automatically; explicit stars and fresh unread/inbox, content, existing-destination, and input-validation checks remain. Published the revised policy; no credentials, schedules, or account connections changed.
+- Reviewed all **73** messages from the 100-limit fetch, rather than only examples. After five sample filings in execution 9, preview **10** proposed **63** additional filings, retained two personally important messages, and skipped three no longer unread/inbox. Published execution **11** filed 63: 41 to Unimportant nextdoor and 22 to Company Spam. The assistant filed **68** total across the two apply runs.
+- **Checks:** Gmail confirmed every filed target label, INBOX removed, UNREAD and all other prior labels preserved, with zero errors/unknown outcomes. Twenty-one focused policy checks passed. Review found confidence/reason validation missing for newly eligible important/uncertain decisions; failing cases reproduced it and the fix passed. No actual batch decisions were malformed. Node validation had only the pre-existing disabled Outlook-placeholder warning. No mail was sent, deleted, or marked read.
+- Updated service documentation and active/completed checklists. Private snapshots/results/inverse operations are under `/home/trappserver/n8n-gmail-scaffold-20261003/`: `policy-before.json` restores the prior workflow policy; `live-filing-9-private.json` and `live-filing-11-private.json` contain inverse label operations. Inspect fresh labels before inverse operations; restoring workflow code does not restore message placement. Old cursors were discarded.
+- **Skipped/deferred:** Inverse execution, a full 100-result page, 100-decision batches, additional accounts, and schedules. No extra mailbox fetch was needed after the confirmed modification responses. Public documentation excludes mail content and private identifiers.
+- **Publication:** Saved through Mintlify in the existing follow-up [PR #28](https://github.com/ryantrappy/docs/pull/28); main-site publication requires an authorized merge because the connected token cannot merge.
+
 ### Gmail sample decisions applied
 
 - At the owner's request, published [email-classifier workflow](https://n8n.ryantr.app/workflow/wNJkClsD7uBVBgTX) execution **9** used `action: "file"` and explicit `dryRun: false` to apply five high-confidence unimportant sample decisions: three messages labeled Company Spam and two labeled Unimportant nextdoor, with INBOX removed. Four important/uncertain examples were not modified. This applied the reviewed sample, not the entire 73-message fetch.

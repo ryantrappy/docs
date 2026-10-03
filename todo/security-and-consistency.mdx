@@ -14,7 +14,7 @@ Keep secret values, recovery codes, and private keys out of this page. Recheck e
 
 The [Gmail scaffold](/services/personal#gmail-email-classifier-scaffold) is saved, tested through manual MCP calls, and recorded on the [completed checklist](/todo/completed#gmail-email-classifier-scaffold-completed).
 
-- [ ] **Inverse rollback:** Live five-message filing passed in execution 9: target labels present, INBOX removed, UNREAD and other labels preserved, zero errors/unknown outcomes. Executing the inverse remains untested; inspect fresh labels before using the owner-only record `/home/trappserver/n8n-gmail-scaffold-20261003/live-filing-9-private.json`.
+- [ ] **Inverse rollback:** Executions 9 and 11 filed 68 messages total. Gmail confirmed target labels, INBOX removed, UNREAD and other labels preserved, with zero errors/unknown outcomes. Executing the inverse remains untested; inspect fresh labels before using owner-only `live-filing-9-private.json` and `live-filing-11-private.json` under `/home/trappserver/n8n-gmail-scaffold-20261003/`.
 - [ ] **Account expansion:** Add Outlook credentials and provider-specific unread pagination/folder mapping when an account is connected. Gmail is currently the only accepted account.
 - [ ] **Deferred validation:** Exercise a full 100-result page and a 100-decision filing batch. The owner published the workflow; a 100-message fetch request and the actual HTTP webhook are verified, but the test had only 73 matching unread inbox messages. No schedule is enabled.
 
