@@ -14,6 +14,14 @@ The deployment uses n8n and task runners **2.41.6**, sandbox API/runner **1.6.0*
 
 **HTTPS access added — 2026-10-03:** Use [n8n.ryantr.app](https://n8n.ryantr.app) from the LAN. Caddy terminates trusted HTTPS and proxies to `192.168.1.163:5678` under the `192.168.1.0/24` guard. UniFi LAN DNS points to Caddy at `192.168.1.236`. The route change did not alter the existing `N8N_SECURE_COOKIE=false` environment setting; secure-cookie restoration remains a separate deployment change. See [Caddy route checks and rollback](/infrastructure/caddy#lan-only-application-routes).
 
+### MCP access from Codex
+
+**Public URL repaired — 2026-10-03:** The saved Komodo Compose sets `N8N_EDITOR_BASE_URL: https://n8n.ryantr.app` specifically on the n8n service. Use `https://n8n.ryantr.app/mcp-server/http` as the Codex MCP endpoint. Protected-resource metadata and OAuth discovery now advertise this HTTPS hostname instead of localhost. Komodo deployment completed; editor, health and readiness returned 200, and Codex reached OAuth browser authorization.
+
+For an SSH session, run `codex mcp login n8n --no-browser` in the server terminal. Open the generated authorization link on your laptop. After approval, copy the full callback URL from the browser into the waiting SSH terminal, even if that localhost page fails to load. Keep callback URLs out of documentation and logs. OAuth sign-in completed on this server; a fresh Codex app-server initialized the authenticated MCP and discovered 56 tools. Reload the current Codex MCP connection or restart the session to load them. User workflows were not executed.
+
+Rollback snapshot: `/home/trappserver/n8n-mcp-fix-20261003/stack-before.json`. Restore only its `config.file_contents` through Komodo and redeploy n8n. This preserves the earlier environment repairs.
+
 ### Environment relationships
 
 - `N8N_RUNNERS_MODE=external` and `N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0` allow the separate JavaScript/Python task runners to connect. Their `N8N_RUNNERS_AUTH_TOKEN` matches n8n's token.

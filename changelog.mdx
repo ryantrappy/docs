@@ -8,6 +8,14 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-03
 
+### n8n MCP public URL repair
+
+- Set `N8N_EDITOR_BASE_URL=https://n8n.ryantr.app` in the n8n service environment of the saved Komodo Compose on `m1-mac`. This corrects MCP resource and OAuth URLs that previously advertised `http://localhost:5678`. The existing Codex MCP URL was already correct.
+- Redeployed the n8n service successfully (Komodo update `6ac0872655b3b6da4b789d13`). n8n was recreated; Compose also ran its certificate initializer dependency, which exited successfully, and confirmed the sandbox API healthy.
+- **Checks:** Trusted HTTPS protected-resource metadata now exactly matches `https://n8n.ryantr.app/mcp-server/http`; issuer, authorization, token, registration and revocation discovery URLs use the HTTPS hostname. Editor, health and readiness returned HTTP 200. Codex accepted discovery, registered an OAuth client and reached browser authorization.
+- **Authentication verified:** Delivered the owner-provided callback to the active server loopback listener; it returned HTTP 200 and authentication complete. A fresh local Codex app-server initialized n8n with OAuth and discovered **56 tools**. Reload/reconnect the current Codex session to load them. For future SSH logins, use `codex mcp login n8n --no-browser` and paste the laptop's full callback URL into the waiting server terminal even if its localhost page cannot load. User workflows, sandbox execution, reboot and restore tests were skipped.
+- Updated the [n8n reference](/services/personal#n8n-on-m1-mac), completed repair/authentication checklist. Protected rollback: `/home/trappserver/n8n-mcp-fix-20261003/stack-before.json`; restore only its saved Compose through Komodo and redeploy n8n. Documentation saved in [PR #25](https://github.com/ryantrappy/docs/pull/25); preview deployment and link validation passed, spellcheck was neutral. Publication remains pending merge. Mintlify's merge operation rejected this PR because it was not authored by the Mintlify bot; GitHub also denied merge with `Resource not accessible by personal access token`. An authorized repository maintainer must merge PR #25 to publish these documentation changes.
+
 ### n8n documentation conflict resolution
 
 - Reconciled [PR #24](https://github.com/ryantrappy/docs/pull/24) with the current main branch. Preserved both completed n8n entries and the earlier environment-repair history, and added the HTTPS access path to the existing service reference. No operational settings changed; the previously configured HTTP cookie setting remains unchanged.
