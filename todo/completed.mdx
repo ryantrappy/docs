@@ -6,6 +6,13 @@ icon: "circle-check"
 
 Completed items moved from the [active checklist](/todo/security-and-consistency) on **2026-10-02**. Original task numbers, completion notes, and verification details are retained below. Items that still have unchecked completion criteria remain on the active checklist.
 
+### n8n environment repair and LAN HTTP access (Completed)
+
+- [x] **Complete — 2026-10-02:** Repaired the saved Komodo `n8n` stack environment on `m1-mac`, redeployed the affected services, and set `N8N_SECURE_COOKIE=false` for the owner's requested LAN HTTP access.
+- [x] Verified matching authentication settings, external JavaScript/Python launcher registration, sandbox runner registration/image readiness, and LAN editor/health/readiness HTTP 200 after deployment.
+
+**Limits and recovery:** Actual user workflows, browser login, Assistant/sandbox execution, search, reboot and restore tests were not performed. Assistant activation remains deferred. See the [service reference](/services/personal#n8n-on-m1-mac) and protected rollback snapshot `/home/trappserver/n8n-environment-fix-20261002/stack-before.json`. Documentation publication status belongs to the change delivery.
+
 ### 02. Restrict direct management and application ports (Completed)
 
 - [x] **Complete — 2026-09-29:** Implemented the requested scope: remote direct access to applications marked `internal-only` in Caddy is restricted to **192.168.1.0/24**. Host loopback and server-local Docker bridge integrations remain trusted. Other TODO items were not remediated.

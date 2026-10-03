@@ -6,6 +6,32 @@ icon: "house"
 
 This reference covers rankings, recipes, Homebridge, and the running TeslaMate support services, checked on **2026-09-28**.
 
+## n8n on m1-mac
+
+**Updated — 2026-10-02:** Komodo manages the `n8n` stack on Server `m1-mac`, at [LAN HTTP access](http://192.168.1.163:5678). Its saved Compose and stack Environment are the deployment source; Komodo resolves named secret references and writes `.env`. Edit the stack in Komodo rather than its generated files.
+
+The deployment uses n8n and task runners **2.41.6**, sandbox API/runner **1.6.0**, and SearXNG `latest`. Only n8n publishes host port `5678`; the broker and sandbox services communicate on `n8n_default`.
+
+### Environment relationships
+
+- `N8N_RUNNERS_MODE=external` and `N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0` allow the separate JavaScript/Python task runners to connect. Their `N8N_RUNNERS_AUTH_TOKEN` matches n8n's token.
+- `SANDBOX_RUNNER_REGISTRATION_TOKEN` resolves the same Komodo secret as `SANDBOX_API_RUNNER_REGISTRATION_TOKEN`.
+- `N8N_SANDBOX_SERVICE_API_KEY` resolves `[[SANDBOX_API_KEYS]]` so n8n uses an API-accepted key.
+- `SANDBOX_RUNNER_API_KEYS` resolves `[[SANDBOX_API_RUNNER_API_KEY]]` so the runner accepts the API's outgoing key.
+- `N8N_SECURE_COOKIE=false` is explicitly requested for LAN HTTP access. This allows session cookies over HTTP; use HTTPS and restore `true` if moving to an HTTPS access path.
+
+### Storage and recovery
+
+The `n8n_n8n-data` named volume stores `/home/node/.n8n`; `n8n_sandbox-tls` holds the sandbox TLS material. SearXNG settings are mounted read-only from `/Users/trappserver/Desktop/code/komodo-periphery/stacks/n8n/searxng-settings.yml`. The saved Compose defines no restart policies. This change did not validate reboot persistence or backups. The sandbox API's SQLite directory is not explicitly mounted in the saved Compose.
+
+The protected rollback snapshot is `/home/trappserver/n8n-environment-fix-20261002/stack-before.json`. Restore its stack Environment through Komodo and redeploy the affected services if reverting; do not remove data volumes. That snapshot predates both the environment repair and the HTTP cookie setting.
+
+### Verification and remaining work
+
+The environment repair deployment succeeded. Live secret comparisons matched, n8n registered both external launchers, the sandbox runner established its registration stream and prepared the sandbox image, and the sandbox API became healthy. n8n's LAN editor, health and readiness endpoints returned HTTP 200. The one-shot `sandbox-certs` container exited successfully as expected.
+
+n8n reports the Assistant sandbox feature disabled; enabling Assistant, configuring an AI provider, and executing user workflows were outside this repair. Browser login, actual JavaScript/Python workflows, sandbox execution, SearXNG queries, restore tests and reboot tests were not performed. The HTTP-cookie redeployment is checked separately in the changelog.
+
 ## Fantasy football rankings
 
 [Rankings](https://rankings.ryantr.app) is a public Caddy route to host port 3030. Komodo manages `fantasy-rankings` from the linked `fantasy_rankings` repository at `/etc/komodo/repos/fantasy_rankings/docker-compose.yml`.
