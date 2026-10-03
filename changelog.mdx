@@ -8,6 +8,15 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-03
 
+### Gmail webhook and unread-limit verification
+
+- Confirmed that [Outlook email classifier](https://n8n.ryantr.app/workflow/wNJkClsD7uBVBgTX) already accepts `pageSize` from 1 to 100 and always filters unread inbox mail. No workflow parameters or service settings were changed. The owner published the existing version; the original draft-only status is superseded by this verification.
+- **Checks:** MCP execution 6 requested 100 messages successfully. Actual LAN HTTPS POST to the published webhook completed as execution 8, returned HTTP 200 in about 33 seconds, and returned 73 unique unread inbox messages with zero errors and no continuation token. Every message retained UNREAD and INBOX. The test URL initially returned 404 without a listener; the published route is verified.
+- **Classification preview:** Execution 7 evaluated nine examples using existing user labels: five proposed filings and four important/uncertain messages kept in place. The Gmail modification node did not run; no email was moved or marked read. Mail content and private links are excluded from the public documentation.
+- Updated [n8n call/verification notes](/services/personal#gmail-email-classifier-scaffold) and active/completed checklist status. Documentation PR #26 is now merged; earlier publication blockers remain preserved as history.
+- **Skipped/deferred:** There were only 73 matching messages, so a full 100-result page remains untested. Live filing/inverse rollback, 100-decision filing batches, additional accounts, and schedules remain deferred. Workflow rollback references remain in `/home/trappserver/n8n-gmail-scaffold-20261003/`; no rollback was performed.
+- **Publication:** This test record is saved through Mintlify in a follow-up documentation PR. Main-site publication requires its merge by an authorized GitHub user; the current token cannot merge PRs.
+
 ### Gmail classifier documentation conflict resolution
 
 - Combined [PR #26](https://github.com/ryantrappy/docs/pull/26)'s Gmail scaffold documentation with main commit `e6235bc1f17e9ca6a7781c0e7a6a85084a65af12`, including the n8n MCP URL/authentication reference and completed checklist from [PR #25](https://github.com/ryantrappy/docs/pull/25). Preserved both sets of additions and earlier changelog history.
