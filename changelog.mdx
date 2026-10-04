@@ -8,6 +8,12 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-04
 
+### GitHub PR handoff rule
+
+- At the owner's request, persisted a workspace rule in `codex_docs/AGENTS.md`: Codex may create or update GitHub PRs but must never attempt to merge them, including documentation PRs. Updated the [change-completion checklist](/operations/services#complete-a-change) to leave merging to the owner and report pending publication explicitly.
+- **Checks:** Saved the standing instruction through the existing home-directory discovery symlink. No merge, permission expansion or service change was attempted. Service checks were unnecessary and skipped.
+- **Publication:** Saved in existing [PR #29](https://github.com/ryantrappy/docs/pull/29); publication awaits the owner's merge. The prior denied merge remains recorded as history. Reverting the rule requires an explicit owner instruction.
+
 ### Codex documents and recovery artifacts consolidated
 
 - Moved 16 Codex-created task directories, including project checkouts, scripts, documents and protected recovery snapshots, from `/home/trappserver/` into `/home/trappserver/codex_docs/`. Set the destination to owner-only access (0700); retained existing private file and directory permissions.
