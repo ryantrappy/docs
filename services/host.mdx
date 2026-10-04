@@ -29,7 +29,7 @@ Trappserver runs applications and operational services directly on **Ubuntu 24.0
 
 The legacy `ddclient.service` used `protocol=dyndns2` with `domains.google.com` and was reporting failed updates. It is now stopped and disabled in systemd and legacy SysV startup. The installed package and configuration are retained for rollback; do not restart it alongside Cloudflare DDNS.
 
-The private pre-disable configuration backup is `/home/trappserver/komodo-migration/ddclient-config-before-disable-20261002`. See [public DDNS coverage](/infrastructure/caddy#public-ddns-coverage) for current hostnames. Retired public names are not recreated; internal service names remain owned by UniFi DNS.
+The private pre-disable configuration backup is `/home/trappserver/codex_docs/komodo-migration/ddclient-config-before-disable-20261002`. See [public DDNS coverage](/infrastructure/caddy#public-ddns-coverage) for current hostnames. Retired public names are not recreated; internal service names remain owned by UniFi DNS.
 
 ## Terminal access and authentication monitoring
 
