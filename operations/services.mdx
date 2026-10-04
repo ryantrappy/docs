@@ -42,7 +42,7 @@ Home Assistant and UniFi run off-host. Use [Homelab devices](/infrastructure/dev
 
 Komodo's managed stacks are listed in the [inventory](/services/overview#komodo-stacks-after-migration). Update their source in Komodo, or the linked repository for the rankings stack.
 
-Portainer-era containers may retain `/data/compose/...` labels from their last creation. Their active definitions are now saved in Komodo; use the Komodo Stack for changes and redeployment. Komodo core, periphery, and MongoDB use the independent bootstrap file at `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml`. See the private migration and rollback record at `/home/trappserver/komodo-migration/README.md`.
+Portainer-era containers may retain `/data/compose/...` labels from their last creation. Their active definitions are now saved in Komodo; use the Komodo Stack for changes and redeployment. Komodo core, periphery, and MongoDB use the independent bootstrap file at `/home/trappserver/Documents/komodo/komodo/mongo.compose.yaml`. See the private migration and rollback record at `/home/trappserver/codex_docs/komodo-migration/README.md`.
 
 Preserve project names, mounts, port mappings, networks, and environment settings. Generated Compose files are useful evidence but may be overwritten by the manager.
 
@@ -102,13 +102,19 @@ Retain volume names and host paths when restoring. Removing a container does not
 
 Record the new access path, image/release, deployment source, ports, data locations, dependencies, and verification date. Explain any remaining unknowns beside the affected service so the next maintenance task starts with useful evidence.
 
+## Codex documents and recovery artifacts
+
+Store standalone Codex-created documents, plans, reports, scripts, exports, recovery snapshots and task directories under `/home/trappserver/codex_docs/`, using a descriptive task subdirectory. Existing task directories moved here on 2026-10-04; live service configuration and data retain their established deployment paths. Project-native source and documentation remain within their repositories.
+
+The directory is owner-only (0700). Keep credential-bearing recovery files private. `/home/trappserver/AGENTS.md` points to `codex_docs/AGENTS.md` so future sessions discover the storage rule. The relocation manifest and rollback instructions are at `/home/trappserver/codex_docs/relocation-20261004.json`. Archived scripts and snapshots retain historical contents; review old absolute paths before reusing them.
+
 ## Complete a change
 
 Before marking any homelab change complete, add a dated entry to the [Changelog](/changelog). This applies to deployments, configuration, services, networking, storage, security and documentation.
 
 1. Update the affected service reference and checklist status.
 2. Add or extend the current UTC date in the changelog. State the actual change, affected services, verification results and any deferred work or required user action.
-3. Save the documentation changes with the same change delivery. If publication is blocked or a PR is still open, report that status and its link explicitly.
+3. Save the documentation changes with the same change delivery. Create or update the GitHub PR and leave merging to the owner; Codex must never attempt a PR merge or request broader permissions to merge. Report the PR link and that publication awaits the owner's merge.
 4. Keep credential values and private recovery material out of the entry.
 
 Do not describe a proposal, unverified deployment or pending publication as completed. Record reversions and corrections as new outcomes so the history remains useful.
@@ -117,4 +123,4 @@ Do not describe a proposal, unverified deployment or pending publication as comp
 
 Docker control is host-administrator access. Periphery is the only retained socket-mounted container. Komodo and Homelable MCP require authentication and direct management ports are limited to LAN/server-local clients by the persistent host policy.
 
-Use the separate `homelab-inventory` login for read-only Server/Stack/Repo access through Komodo or MCP local OAuth login. Use an administrator identity only for intended deployments. The protected local inventory credentials are at `/home/trappserver/management-access-20261002/inventory-access.json`. Homelable MCP keys grant application tool access and have no configured per-key read-only scope. Never publish credentials or add the deployment super-admin token to an inventory client.
+Use the separate `homelab-inventory` login for read-only Server/Stack/Repo access through Komodo or MCP local OAuth login. Use an administrator identity only for intended deployments. The protected local inventory credentials are at `/home/trappserver/codex_docs/management-access-20261002/inventory-access.json`. Homelable MCP keys grant application tool access and have no configured per-key read-only scope. Never publish credentials or add the deployment super-admin token to an inventory client.
