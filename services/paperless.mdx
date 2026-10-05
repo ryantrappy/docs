@@ -4,21 +4,35 @@ description: "Running containers, access, storage, and maintenance for paperless
 icon: "file-lines"
 ---
 
-Paperless-ngx runs as a three-container Komodo stack. Paperless AI is a separate container. This reference was checked on **2026-09-28**.
+Komodo's `paperless` stack manages the Paperless-ngx webserver, PostgreSQL, Redis and Paperless AI. Authentication and connectivity were checked on **2026-10-05**; other inventory details retain their 2026-09-28 observation date.
 
 ## Access and deployment
 
 [Paperless](https://paperless.ryantr.app) is a public Caddy route to host port 8010, mapped to webserver port 8000. Paperless AI publishes 8087 to port 3000 and has no current Caddy route.
 
-Komodo manages `paperless` from `/etc/komodo/stacks/paperless/compose.yaml`. The webserver, PostgreSQL database, and Redis broker share `paperless_default`. Database and broker ports are not published to the host.
+Komodo manages `paperless` from `/etc/komodo/stacks/paperless/compose.yaml`. The webserver, PostgreSQL database, Redis broker and Paperless AI share `paperless_default`. Database and broker ports are not published to the host.
 
-Paperless AI's API connection, provider, and processing settings were not inspected.
+Paperless AI's API connection was verified on 2026-10-05. Its provider and processing behavior were not tested.
 
-## Native app authentication — pending fix (2026-10-05)
+## Native app authentication (2026-10-05)
 
-The current Authelia gate covers Paperless API requests as well as browser routes. A direct anonymous `/api/documents/` request returns Paperless HTTP 401; the same request through local Caddy redirects to Authelia (302). Native clients using only Paperless credentials or tokens therefore cannot reach the API through the shared gate. The installed Paperless release is 3.2.1; trusted-header SSO settings are absent, and the Authelia username matches the existing Paperless administrator account.
+The approved fix is applied and persisted. Authelia bypasses only Paperless paths matching `^/api([/?].*)?$`, allowing native clients to authenticate with Paperless credentials or an API token. Protected API resources still require Paperless authentication. Browser routes require Authelia password and TOTP, then sign in to the matching existing Paperless account through trusted headers.
 
-A proposed fix is staged privately under `/home/trappserver/codex_docs/paperless-auth-20261005/`. It adds an Authelia exception only for `/api`, retaining Paperless authentication; enables browser trusted-header SSO and Authelia logout; binds the backend port to loopback; and moves Paperless AI to the stack network with API URL `http://webserver:8000/api`. Automatic approval review rejected applying these authentication/network changes and service restarts pending explicit approval. No live configuration, restart, or deployment occurred. Direct LAN access to port 8010 would cease after approval; use the HTTPS hostname. See the [Authelia integration guide](https://www.authelia.com/integration/trusted-header-sso/paperless/).
+Komodo's saved webserver environment includes:
+
+```yaml
+PAPERLESS_URL: https://paperless.ryantr.app
+PAPERLESS_ENABLE_HTTP_REMOTE_USER: "true"
+PAPERLESS_ENABLE_HTTP_REMOTE_USER_API: "false"
+PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME: HTTP_REMOTE_USER
+PAPERLESS_LOGOUT_REDIRECT_URL: https://auth.ryantr.app/logout
+```
+
+The backend publishes only `127.0.0.1:8010:8000`; use [Paperless](https://paperless.ryantr.app), not direct LAN port 8010. Paperless AI joins `paperless_default` and its persisted `.env` uses `PAPERLESS_API_URL=http://webserver:8000/api`. The Paperless-specific Caddy handler uses `route` to strip supplied identity headers before forward-auth copies Authelia's verified identity. Default directive sorting previously stripped the copied header afterward.
+
+**Verified:** Authelia and Caddy validation passed; both Paperless containers are healthy. Existing-token API requests through local Caddy and normal hostname HTTPS returned 200 without an Authelia cookie. Missing/invalid tokens and forged identity returned Paperless 401. Browser and API-lookalike paths remained gated. Password alone was denied; TOTP enabled browser SSO and its API session; logout restored the gate. AI's saved URL and existing token reached the backend with 200. Live environment and Komodo source agree, and direct LAN port 8010 is unavailable. Database and Redis containers were not recreated; images were not upgraded; normal Komodo update settings were restored.
+
+**Remaining:** Retry real phone login/sync with existing Paperless credentials or token, and test from a separate external network. No reboot, upload, backup or restore test was performed. Protected before snapshots and coordinated rollback instructions are in `/home/trappserver/codex_docs/paperless-auth-20261005/RESULTS.md`. Restore Komodo source, Authelia policy, AI environment and Caddyfile together if rolling back. See the [Authelia integration guide](https://www.authelia.com/integration/trusted-header-sso/paperless/).
 
 ## Storage and recovery
 
@@ -59,7 +73,7 @@ Paperless-ngx document management application.
 | Image tag | `ghcr.io/paperless-ngx/paperless-ngx:latest` |
 | Compose project / service | `paperless` / `webserver` |
 | Network | `paperless_default` |
-| Host → container ports | `8010 → 8000/tcp` |
+| Host → container ports | `127.0.0.1:8010 → 8000/tcp` |
 | Restart policy | `unless-stopped` |
 | Docker health | Healthy at inventory time |
 | Caddy route | [paperless.ryantr.app](https://paperless.ryantr.app) |
@@ -118,8 +132,8 @@ AI companion for Paperless.
 | Setting | Observed value |
 | --- | --- |
 | Image tag | `clusterzx/paperless-ai:latest` |
-| Compose project / service | No Compose labels |
-| Network | `bridge` |
+| Compose project / service | `paperless` / `paperless-ai` |
+| Network | `paperless_default` |
 | Host → container ports | `8087 → 3000/tcp` |
 | Restart policy | `unless-stopped` |
 | Docker health | Healthy at inventory time |

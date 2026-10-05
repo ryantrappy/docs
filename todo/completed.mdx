@@ -4,6 +4,14 @@ description: "Completed homelab tasks, preserving their verification evidence, r
 icon: "circle-check"
 ---
 
+## Paperless authentication configuration — completed 2026-10-05
+
+- [x] Persisted API-only Authelia exception retaining Paperless authentication, browser trusted-header SSO, loopback backend port and AI connectivity through the stack network.
+- [x] Corrected Paperless's Caddy identity-header order; validated and applied Caddy and Authelia configuration; deployed only webserver and AI without image upgrades.
+- [x] Verified existing-token API access, two-factor browser SSO and API session, logout, invalid-token/anonymous/forged-header rejection, AI connectivity, healthy containers and saved configuration readback. Database and Redis containers were not recreated.
+
+Actual phone login/sync and separate external-network checks remain in [active item 21](/todo/security-and-consistency). Configuration snapshots and rollback instructions are owner-only under `/home/trappserver/codex_docs/paperless-auth-20261005/`. Documentation publication awaits the owner's PR merge.
+
 Completed items moved from the [active checklist](/todo/security-and-consistency) on **2026-10-02**. Original task numbers, completion notes, and verification details are retained below. Items that still have unchecked completion criteria remain on the active checklist.
 
 ### Gmail email-classifier scaffold (Completed)
