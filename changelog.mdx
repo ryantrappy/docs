@@ -8,6 +8,15 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-05
 
+### Paperless app authentication fix applied after approval
+
+- The owner explicitly approved the staged proposal, superseding the automatic review blocker below. Persisted the Paperless `/api`-only Authelia exception, retaining native Paperless authentication; browser trusted-header SSO, canonical URL and logout settings; loopback-only port 8010; and AI's `paperless_default` membership with its saved `http://webserver:8000/api` connection.
+- Fixed a discovered Caddy ordering issue: default directive sorting removed the trusted identity after forward-auth copied it. Paperless's handler now uses `route` to strip supplied headers before Authelia provides verified ones. Caddy and Authelia validation passed; Caddy reloaded and Authelia restarted. Komodo redeployed only webserver and AI without image pulls/upgrades. Both are healthy; database and Redis container IDs stayed unchanged. Normal Komodo update settings were restored and read back.
+- **Checks:** Existing Paperless token returned 200 through local Caddy and normal hostname HTTPS without an Authelia cookie. Missing/invalid tokens and forged identity headers returned Paperless 401. Browser/API-lookalike routes stayed gated; password alone was denied; TOTP enabled browser SSO and session API access; logout restored the gate. AI's existing token and persisted connection returned 200. Live environment matched saved Komodo source; direct LAN port 8010 was unavailable. A first browser check exposed the header-order defect; the corrected flow passed.
+- Updated [Paperless](/services/paperless), [Caddy](/infrastructure/caddy), and active/completed checklist items. Actual phone login/sync and a separate external-network check remain deferred for the owner. No reboot, document upload, backup or restore test was needed or performed. Use the HTTPS hostname with existing Paperless credentials or an API token; direct LAN port 8010 is intentionally unavailable.
+- **Rollback:** Owner-only configuration snapshots and `RESULTS.md` are under `/home/trappserver/codex_docs/paperless-auth-20261005/`. Restore the saved Komodo source, Authelia policy, AI environment and Caddyfile together; validate/reload/redeploy as documented. These are configuration snapshots, not document/database backups. No credentials or document content are included here.
+- **Publication:** Changes saved in [PR #30](https://github.com/ryantrappy/docs/pull/30); main-site publication awaits the owner's merge. The earlier diagnosis and rejected application remain below as history.
+
 ### Paperless native app authentication diagnosed; fix pending approval
 
 - Identified that the Authelia gate redirects Paperless API requests to its login portal, preventing native clients from presenting Paperless tokens directly. Paperless 3.2.1 lacks trusted-header settings; its administrator username matches Authelia. Updated the Paperless reference and active Authelia checklist with the findings and pending proposal.
