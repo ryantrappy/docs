@@ -6,6 +6,16 @@ icon: "clock-rotate-left"
 
 Use this log to see what changed and whether any follow-up affects you. Entries use UTC dates, with the newest first. Service references describe the current setup; this log preserves the change history.
 
+## 2026-10-05
+
+### Paperless native app authentication diagnosed; fix pending approval
+
+- Identified that the Authelia gate redirects Paperless API requests to its login portal, preventing native clients from presenting Paperless tokens directly. Paperless 3.2.1 lacks trusted-header settings; its administrator username matches Authelia. Updated the Paperless reference and active Authelia checklist with the findings and pending proposal.
+- Prepared owner-only before/proposed configuration snapshots and `proposal.md` under `/home/trappserver/codex_docs/paperless-auth-20261005/`. Proposed changes: API-only Authelia exception retaining Paperless authentication; browser SSO and logout settings persisted in Komodo; loopback-only port 8010; AI access through `paperless_default` and its persisted API URL. No live setting changed, and no restart or deployment occurred.
+- **Checks:** Direct anonymous Paperless API returned 401; local Caddy API request returned 302 to Authelia. Reviewed saved Komodo source, installed authentication implementation, matching account names, and AI's direct LAN API dependency. A Python request via normal hostname was blocked by Cloudflare (403/error 1010), so it did not validate the origin route. No credential values or document contents were exposed.
+- **Blocked/deferred:** Automatic approval review rejected applying the persistent API exception, authentication/network changes, Authelia restart and Paperless/AI redeployment pending explicit approval. Live validation, authenticated API and browser SSO checks, AI connectivity after deployment, real phone login/sync and external reachability remain pending. No reboot, backup or restore test was needed or run.
+- **User action and rollback:** Approve the staged proposal before live application; after implementation, test the phone and use the HTTPS hostname instead of direct LAN port 8010. Private before snapshots cover Komodo source, Authelia policy and AI environment for coordinated rollback; they are not document/database backups. Documentation publication awaits the owner's merge of the saved PR.
+
 ## 2026-10-04
 
 ### GitHub PR handoff rule

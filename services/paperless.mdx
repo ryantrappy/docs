@@ -14,6 +14,12 @@ Komodo manages `paperless` from `/etc/komodo/stacks/paperless/compose.yaml`. The
 
 Paperless AI's API connection, provider, and processing settings were not inspected.
 
+## Native app authentication — pending fix (2026-10-05)
+
+The current Authelia gate covers Paperless API requests as well as browser routes. A direct anonymous `/api/documents/` request returns Paperless HTTP 401; the same request through local Caddy redirects to Authelia (302). Native clients using only Paperless credentials or tokens therefore cannot reach the API through the shared gate. The installed Paperless release is 3.2.1; trusted-header SSO settings are absent, and the Authelia username matches the existing Paperless administrator account.
+
+A proposed fix is staged privately under `/home/trappserver/codex_docs/paperless-auth-20261005/`. It adds an Authelia exception only for `/api`, retaining Paperless authentication; enables browser trusted-header SSO and Authelia logout; binds the backend port to loopback; and moves Paperless AI to the stack network with API URL `http://webserver:8000/api`. Automatic approval review rejected applying these authentication/network changes and service restarts pending explicit approval. No live configuration, restart, or deployment occurred. Direct LAN access to port 8010 would cease after approval; use the HTTPS hostname. See the [Authelia integration guide](https://www.authelia.com/integration/trusted-header-sso/paperless/).
+
 ## Storage and recovery
 
 | Data | Host location |
