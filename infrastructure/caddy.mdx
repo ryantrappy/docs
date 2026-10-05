@@ -24,7 +24,7 @@ A client resolves an application hostname, connects to Caddy on port 443, and Ca
 
 Host networking lets Caddy reach services on the server through `127.0.0.1`. Home Assistant and UniFi use separate LAN addresses.
 
-"Public" below means the route has no Caddy LAN guard. Since 2026-10-01, public application browser routes require Authelia password and TOTP except resume pages, Ombi, and rankings. Native Home Assistant and Immich paths retain their app authentication. Internet reachability also depends on DNS and router rules. See the shared authentication policy below.
+"Public" below means the route has no Caddy LAN guard. Since 2026-10-01, public application browser routes require Authelia password and TOTP except resume pages, Ombi, and rankings. Native Home Assistant, Immich and Paperless paths retain their app authentication. Internet reachability also depends on DNS and router rules. See the shared authentication policy below.
 
 ## Files and deployment
 
@@ -136,7 +136,8 @@ Authelia runs in its own Komodo stack, pinned to version 4.39.28 and the tested 
 | Route | Access policy |
 | --- | --- |
 | `ha.ryantr.app` | Authelia password and TOTP for browser routes; native `/api`, `/auth`, and static frontend assets retain app authentication or public static behavior |
-| `ninja.ryantr.app`, `recipes.ryantr.app`, `paperless.ryantr.app` | Authelia password and TOTP |
+| `ninja.ryantr.app`, `recipes.ryantr.app` | Authelia password and TOTP |
+| `paperless.ryantr.app` | Authelia password and TOTP with browser SSO; `/api` retains Paperless credentials/token authentication |
 | `immich.ryantr.app` | Authelia password and TOTP for browser routes; `/api` retains Immich authentication |
 | `uptime.ryantrapp.com` | Authelia password and TOTP |
 | `tautulli.ryantr.app` | Authelia password and TOTP |
@@ -145,6 +146,12 @@ Authelia runs in its own Komodo stack, pinned to version 4.39.28 and the tested 
 | `auth.ryantr.app`, `auth.ryantrapp.com` | Public Authelia login portals; separate session cookies for the two domains |
 
 Protected handlers strip incoming `Remote-User`, `Remote-Groups`, `Remote-Email`, and `Remote-Name` headers, then call Authelia's `/api/authz/forward-auth` endpoint. Authelia requires the administrator group and two-factor authentication. Caddy trusts client-IP headers only from the loopback connector; remote LAN connectors retain their peer address for rate limiting. A stopped Authelia yields a 502 on gated applications; it does not grant access.
+
+### Paperless identity-header order — 2026-10-05
+
+Paperless's handler wraps `import authelia` and its backend `reverse_proxy` in `route` to preserve their written order. This strips incoming identity headers before forward-auth copies Authelia's verified identity; default directive sorting previously stripped the copied identity afterward. This ordering correction is scoped to Paperless. Its `/api` exception is defined in Authelia and retains native Paperless authentication. Browser trusted-header SSO is enabled, API trusted-header authentication is explicitly disabled, and backend port 8010 is loopback-only. Paperless AI uses the shared Docker network. See [Paperless authentication and verification](/services/paperless#native-app-authentication-2026-10-05).
+
+Caddy validation and reload passed. Existing-token API access returned 200 through local Caddy and normal hostname HTTPS; forged headers remained rejected. Password-only browser access was denied, and two-factor SSO with browser API access and logout passed. Rollback includes `/home/trappserver/codex_docs/paperless-auth-20261005/Caddyfile.before` together with the coordinated service settings in `RESULTS.md`.
 
 ### Cloudflare Tunnel ingress
 
