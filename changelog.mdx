@@ -8,12 +8,12 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-08
 
-### Google, Skylight and Reminders grocery sync prepared
+### Google, Skylight and Reminders grocery sync deployed
 
-- Staged a three-list extension to the existing UID-linked worker on `trappserv.er`. The Google Keep integration is loaded and polls every minute. Additions, check-offs/reactivation and renames reconcile across all sides; deletion propagation requires three fresh observations over at least two minutes, with persistent UID tombstones and write intents. Unavailable integrations pause writes; duplicate matches and concurrent conflicts require review.
-- **Checks:** 25 focused tests passed locally and in the existing Ubuntu virtual environment. Credentialed readback of all three lists succeeded. No candidate item writes, automation change or live worker restart was performed.
-- **Pending:** Confirm the selected Google list and whether to merge its pre-existing items or only future changes. Then deploy and verify add/check-off/delete using temporary items from each list. The existing Skylight/Reminders worker remains active and unchanged.
-- Candidate source, tests, private list snapshot and deployment/rollback notes are under `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/`. Rollback after deployment must stop the worker, restore paired source/config/state and restore automation through the HA API; restoring code does not undo propagated item edits. Host reboot, restore and voice-command tests have not been performed.
+- Added Google Keep to the UID-linked worker on `trappserv.er` and extended the existing Home Assistant automation to request reconciliation for all three lists. The owner cleared Google before bootstrap; fresh readback confirmed eight active groceries on every list. Google Keep polling remains one minute.
+- Reconciliation supports additions, check-offs/reactivation and renames. Deletion requires three fresh refresh cycles spanning at least two minutes, with durable write intents and UID tombstones. Unavailable integrations, ambiguous matches, conflicting edits and unconfirmed additions hold changes for review.
+- **Checks:** 25 focused tests passed locally and on Ubuntu. The live test encountered slow iCloud service responses; its first disposable items were cleaned up and verified absent. Provider calls are sequential and service responses now have a longer timeout. A second live test verifies each source separately using readback, without blindly repeating timed-out additions. Full live completion/deletion and restart verification remain pending.
+- Private recovery files are under `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/before/`. Restore paired source/config/state and the previous automation together after stopping the worker; code rollback cannot undo list changes. Off-host backup, restore, host reboot and Nest voice tests remain outstanding. See [grocery sync](/services/personal#grocery-list-synchronization).
 
 ### Authelia OIDC provider for Home Assistant
 
