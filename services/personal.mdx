@@ -10,7 +10,7 @@ This reference covers rankings, recipes, Homebridge, and the running TeslaMate s
 
 **Deployed — 2026-10-08 UTC:** `skylight-reminders-sync.service` on `trappserv.er` now links Skylight, iCloud Reminders and the owner's Google Keep shopping list through Home Assistant. The owner cleared the Google list before bootstrap; fresh provider readback confirmed that the eight active groceries from the other lists reached Google. Unpaired completed history remains untouched.
 
-The existing HA automation requests reconciliation on changes to any of the three lists, every minute, and at HA startup. Google Keep Sync polls every minute. The worker stores provider item IDs and per-field baselines privately under `/home/trappserver/codex_docs/skylight-reminders-sync/`.
+The existing HA automation requests reconciliation on changes to any of the three lists, every minute, and at HA startup. Google Keep Sync polls every minute. Reminders refreshes can take several minutes; confirmation makes removals slower still. Native WebSocket item snapshots avoid read requests queueing behind cloud writes. The worker stores provider item IDs and per-field baselines privately under `/home/trappserver/codex_docs/skylight-reminders-sync/`.
 
 Additions, rename and completion changes reconcile by linked UIDs. Disappearance requires three fresh reads over at least two minutes before deleting counterparts. Unavailable integrations pause writes; cached reads cannot confirm removal. Durable write intents and tombstones prevent duplicate retries and stale-item resurrection. Ambiguous duplicates, unconfirmed additions and conflicting simultaneous edits are held for review.
 
