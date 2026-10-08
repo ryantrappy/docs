@@ -4,6 +4,14 @@ description: "Completed homelab tasks, preserving their verification evidence, r
 icon: "circle-check"
 ---
 
+## Home Assistant local DNS repair — completed 2026-10-08 UTC
+
+- [x] Changed only `ha.ryantr.app` from a UniFi A override to a Forward Domain policy targeting existing CoreDNS at `192.168.1.236:53`.
+- [x] Added a dedicated CoreDNS zone returning local Caddy A `192.168.1.236` and NOERROR/no answer for AAAA/SVCB/HTTPS, preventing public Cloudflare ECH metadata on the local connection.
+- [x] Validated resolver startup in isolation, restarted only `dns-compatibility`, read back the persisted gateway policy, and verified responses through both DNS addresses. Public-name resolution and advertisement blocking remain functional. Chrome's normal HTTPS dashboard reconnected without disabling TLS verification or browser security settings.
+
+Caddy was unchanged. Earlier experimental Authelia MCP discovery exceptions were restored to their original configuration and Authelia restarted; Chrome's TLS failure persisted until the DNS repair. Protected recovery files are under `/home/trappserver/codex_docs/ha-mcp-dns-repair/`. Restore the UniFi A entry before restoring the old Corefile to avoid a forwarding loop. External-network, reboot and rollback-execution checks were not performed. Documentation publication awaits the owner's PR merge. MCP sign-in remains tracked separately on the active checklist.
+
 ## Paperless authentication configuration — completed 2026-10-05
 
 - [x] Persisted API-only Authelia exception retaining Paperless authentication, browser trusted-header SSO, loopback backend port and AI connectivity through the stack network.
