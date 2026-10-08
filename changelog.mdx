@@ -6,6 +6,18 @@ icon: "clock-rotate-left"
 
 Use this log to see what changed and whether any follow-up affects you. Entries use UTC dates, with the newest first. Service references describe the current setup; this log preserves the change history.
 
+## 2026-10-08
+
+### Home Assistant Chrome TLS and local DNS repair
+
+- Changed only `ha.ryantr.app`'s UniFi DNS entry from A to Forward Domain targeting the existing CoreDNS service at `192.168.1.236:53` (legacy API stores `NS`, TTL 60). Added a dedicated resolver zone returning local Caddy A `192.168.1.236` and NOERROR/no answer for AAAA/SVCB/HTTPS. This corrects the mismatch between local routing and public Cloudflare HTTPS/ECH metadata that caused Chrome's `ERR_SSL_PROTOCOL_ERROR`.
+- UniFi remains DHCP/default DNS and ad-blocking provider; all other names retain gateway forwarding. Public Cloudflare records and Caddy configuration were unchanged. Restarted only `dns-compatibility` after isolated startup validation; no image upgrade or browser-security setting change was made.
+- **Authelia correction:** During MCP diagnosis, added and validated two exact discovery exceptions and verified both discovery endpoints returned 200 while UI/MCP remained protected. Rolled those exceptions back to the original configuration and restarted healthy Authelia after the owner reported a connection failure. The browser's TLS failure persisted after rollback and was resolved by the DNS change. The shared-login policy is now original.
+- **Checks:** Persisted gateway readback; A/AAAA/SVCB/HTTPS through gateway and compatibility DNS; public-name resolution; advertisement blocking (`0.0.0.0`); and normal Chrome HTTPS dashboard reconnection passed. Direct Home Assistant and TLS/WebSocket connectivity also succeeded. An initial unsupported `FORWARD` API record type was rejected without changing the gateway entry; the supported `NS` forwarding policy applied successfully. Reboot, external-network and rollback-execution tests were unnecessary for this scoped repair and not performed.
+- Updated [Networking and DNS](/services/networking), [Caddy DNS reference](/infrastructure/caddy), local DNS service/migration notes, completed repair and active MCP follow-ups. Protected before-state and candidate Corefile are under `/home/trappserver/codex_docs/ha-mcp-dns-repair/`. Rollback must restore the UniFi A entry first, then the original Corefile and restart the resolver, avoiding a forwarding loop.
+- **MCP completed after browser recovery:** Saved Home Assistant admin sign-in (`ha_auth`) in component 2.2.1/server 8.6.0, retaining the existing webhook URL. Reapplied and validated only the two exact OAuth discovery exceptions in Authelia and restarted it. Codex OAuth login succeeded; a fresh local app-server authenticated and discovered 11 tools, including automation read/create/update and tool search, with no discovery error. No automation/device write or Home Assistant core restart was performed. A previously open Codex chat may need its MCP connection refreshed to load the tools.
+- **Publication:** Documentation saved in [PR #31](https://github.com/ryantrappy/docs/pull/31); the live-site update awaits the owner's merge. Review in the [Mintlify editor](https://app.mintlify.com/trappserver/trappserver/editor/admin-mcp%2Fhome-assistant-dns-repair-72d6239).
+
 ## 2026-10-05
 
 ### Paperless app authentication fix applied after approval

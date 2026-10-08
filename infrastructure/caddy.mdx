@@ -183,7 +183,11 @@ The 2026-10-01 repair corrected eleven stale origins and preserved each record's
 
 The DNS migration notes identify UniFi at `192.168.1.1` as the gateway and DHCP DNS server. Local A records point to Caddy at `192.168.1.236`.
 
-The recorded local names include all eleven protected routes plus `ha.ryantr.app`. Home Assistant's local record exists even though its Caddy route is public; the automation only discovers protected routes.
+The recorded local names include all eleven protected routes plus `ha.ryantr.app`. The automation only discovers protected routes.
+
+**Home Assistant DNS correction — 2026-10-08 UTC:** UniFi now forwards only `ha.ryantr.app` to the existing CoreDNS service at `192.168.1.236:53` (Forward Domain; stored as `NS` by the legacy API). CoreDNS answers A with `192.168.1.236` and returns NOERROR/no answer for AAAA, SVCB and HTTPS. This prevents public Cloudflare ECH metadata from being paired with the local Caddy address. Other names, DHCP DNS, ad blocking and public Cloudflare records retain their existing behavior. The resolver answers this zone directly instead of forwarding it back to UniFi, preventing a loop. See [Networking and DNS](/services/networking#home-assistant-local-dns).
+
+Caddy remains unchanged. Two exact MCP discovery exceptions were first tested, then rolled back after a reported connection failure; Chrome's TLS failure persisted after rollback and was resolved by the DNS correction. After browser recovery, the ha-mcp component was switched from legacy OAuth to Home Assistant admin sign-in (`ha_auth`). The exact protected-resource and scoped authorization-server discovery exceptions were then reapplied in Authelia, validated and restarted. Native MCP token validation remains enforced. Codex OAuth login and authenticated discovery of 11 exposed tools succeeded, including `ha_config_get_automation`, `ha_config_set_automation` and `ha_search_tools`. Tool search provides the rest of the catalog. No automation or device state was changed. A previously open Codex chat may need MCP reconnection to load the newly authenticated server.
 
 The sync script:
 
