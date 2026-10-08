@@ -17,7 +17,8 @@ Additions, rename and completion changes reconcile by linked UIDs. Disappearance
 - [x] Discover all three lists and pass 25 focused worker tests locally and on Ubuntu.
 - [x] Confirm empty Google list, deploy the worker and extend the existing HA automation.
 - [x] Verify eight active grocery items are present on all three lists.
-- [ ] Complete live temporary-item tests for additions, completion and deletion from every source. Initial testing encountered iCloud service-call timeouts and an unconfirmed addition; readback must be checked before retrying.
+- [x] Verify live temporary-item additions, check-offs and reactivation from each source without duplicates.
+- [ ] Finish confirmed deletion propagation and temporary-item cleanup. Initial testing encountered iCloud service-call timeouts; readback is checked before retrying. Item snapshots now use native WebSocket reads to avoid queueing behind cloud writes.
 - [ ] Verify restart persistence and an actual Nest voice addition.
 
 Private recovery files are under `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/before/`. Rollback must restore the paired source, configuration and state together with the previous HA automation; old code alone cannot safely read migrated state. Restoring code does not restore edited items. No credentials or item contents belong in public docs. See [change history](/changelog).
