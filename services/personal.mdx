@@ -8,20 +8,19 @@ This reference covers rankings, recipes, Homebridge, and the running TeslaMate s
 
 ## Grocery list synchronization
 
-**Prepared — 2026-10-08 UTC:** The existing `skylight-reminders-sync.service` on `trappserv.er` links Skylight's grocery list and iCloud Reminders through Home Assistant. Its worker stores provider item IDs and per-field baselines privately under `/home/trappserver/codex_docs/skylight-reminders-sync/`; the existing HA automation requests reconciliation through a WebSocket event.
+**Deployed — 2026-10-08 UTC:** `skylight-reminders-sync.service` on `trappserv.er` now links Skylight, iCloud Reminders and the owner's Google Keep shopping list through Home Assistant. The owner cleared the Google list before bootstrap; fresh provider readback confirmed that the eight active groceries from the other lists reached Google. Unpaired completed history remains untouched.
 
-A tested candidate adds Google Keep as a third list and introduces confirmed deletion propagation. Google voice shopping-list entries reach Home Assistant through the owner's Google Keep Sync integration, configured to poll every minute. The candidate is **not deployed** pending confirmation of the selected Google list and initial merge policy. Existing two-list behavior remains unchanged.
+The existing HA automation requests reconciliation on changes to any of the three lists, every minute, and at HA startup. Google Keep Sync polls every minute. The worker stores provider item IDs and per-field baselines privately under `/home/trappserver/codex_docs/skylight-reminders-sync/`.
 
-The candidate tracks additions, rename and completion changes by linked UIDs. It confirms disappearance on three fresh reads over at least two minutes before deleting counterparts; cached reads and unavailable integrations cannot confirm removal. Durable write intents and tombstones prevent duplicate retries and stale-item resurrection. Ambiguous duplicates or conflicting simultaneous edits are held for review rather than overwritten. Unpaired completed history is not copied.
+Additions, rename and completion changes reconcile by linked UIDs. Disappearance requires three fresh reads over at least two minutes before deleting counterparts. Unavailable integrations pause writes; cached reads cannot confirm removal. Durable write intents and tombstones prevent duplicate retries and stale-item resurrection. Ambiguous duplicates, unconfirmed additions and conflicting simultaneous edits are held for review.
 
-- [x] Discover all three list entities and verify provider readback.
-- [x] Pass 25 focused worker tests locally and on Ubuntu.
-- [ ] Confirm Google list selection and existing-item merge policy.
-- [ ] Deploy the three-list worker and extend the existing HA automation.
-- [ ] Verify temporary-item additions, completion and deletion from each list, including restart persistence.
-- [ ] Confirm an actual Nest voice addition reaches both other lists.
+- [x] Discover all three lists and pass 25 focused worker tests locally and on Ubuntu.
+- [x] Confirm empty Google list, deploy the worker and extend the existing HA automation.
+- [x] Verify eight active grocery items are present on all three lists.
+- [ ] Complete live temporary-item tests for additions, completion and deletion from every source. Initial testing encountered iCloud service-call timeouts and an unconfirmed addition; readback must be checked before retrying.
+- [ ] Verify restart persistence and an actual Nest voice addition.
 
-Candidate and private recovery notes: `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/`. Code rollback does not restore edited items; preserve fresh snapshots before recovery. No credentials or item contents belong in public docs. See [change history](/changelog).
+Private recovery files are under `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/before/`. Rollback must restore the paired source, configuration and state together with the previous HA automation; old code alone cannot safely read migrated state. Restoring code does not restore edited items. No credentials or item contents belong in public docs. See [change history](/changelog).
 
 ## n8n on m1-mac
 
