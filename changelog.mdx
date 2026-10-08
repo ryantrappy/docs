@@ -8,6 +8,14 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-08
 
+### Authelia OIDC provider for Home Assistant
+
+- Enabled OIDC in the existing owner-only Authelia configuration with a dedicated 4096-bit RSA signing key and random HMAC. Registered public client `homeassistant`, exact HTTPS callback, S256 PKCE, authorization-code flow and `openid/profile/groups`; the OIDC policy requires `admins` plus two factors and denies others. Existing forward-auth policies, native APIs, MCP discovery exceptions, secrets and session settings were preserved. Restarted only Authelia; Caddy, DNS and Komodo source were unchanged.
+- **Checks passed:** candidate/live configuration validation, healthy startup, TLS-verified discovery/public JWKS, password/TOTP and password-only denial, callback enforcement, rejection of missing/plain PKCE, isolated authorization/consent/code exchange, RS256 token validation and expected userinfo claims. Logged out only the isolated session and revoked only its test access token. Existing MCP discovery remains 200; anonymous MCP and invalid HA API bearer remain 401. Sampled public/login/API responses match before-state. Immich's sampled API 502 was already present and remains outside this change.
+- **Owner action:** install/configure the HA integration with the settings in [Home Assistant OIDC](/infrastructure/caddy#home-assistant-oidc). The owner chose to apply the HA settings; HA was not modified or restarted. Retain local login and verify account identity before any temporary username linking. Actual HA OIDC/account migration, companion-app login/refresh, external-device tests and authenticated MCP tool discovery after HA setup remain pending. Reboot, full restore and rollback execution were not performed.
+- Updated Caddy/Home Assistant service references and active item 21 with completed provider checks and pending HA actions. Exact setup/YAML/results and protected configuration/signing-key recovery artifacts are under `/home/trappserver/codex_docs/authelia-home-assistant-oidc-20261008/`. Provider rollback restores `configuration.before.private.yml`, validates and restarts only Authelia; it preserves the earlier MCP exceptions. HA-side rollback retains its local provider. No secret values are included here.
+- **Publication:** documentation is prepared for a review PR; publication awaits the owner merging it.
+
 ### Home Assistant Chrome TLS and local DNS repair
 
 - Changed only `ha.ryantr.app`'s UniFi DNS entry from A to Forward Domain targeting the existing CoreDNS service at `192.168.1.236:53` (legacy API stores `NS`, TTL 60). Added a dedicated resolver zone returning local Caddy A `192.168.1.236` and NOERROR/no answer for AAAA/SVCB/HTTPS. This corrects the mismatch between local routing and public Cloudflare HTTPS/ECH metadata that caused Chrome's `ERR_SSL_PROTOCOL_ERROR`.

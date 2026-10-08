@@ -12,7 +12,7 @@ Home Assistant is reachable on the LAN at [192.168.1.254:8123](http://192.168.1.
 
 [Caddy](/infrastructure/caddy) sends `ha.ryantr.app` to `192.168.1.254:8123`. Home Assistant is outside the Trappserver Docker inventory. The client label does not establish the physical hardware or installation type.
 
-Version, integrations, automations, backups, and authenticated application health were not inspected. Record the installation method and backup/restore procedure after checking Home Assistant's own administration interface.
+Version, integrations, automations and backups were not inventoried. On **2026-10-08**, Authelia's OIDC provider was enabled and verified for this instance while preserving its existing local authentication and MCP access policy. Home Assistant itself was not changed; the owner elected to install/configure the integration. See [Home Assistant OIDC settings and account migration](/infrastructure/caddy#home-assistant-oidc). Actual HA OIDC login, account linkage and companion-app checks remain pending. Record the installation method and backup/restore procedure after checking Home Assistant's own administration interface.
 
 ## M1 Mac laptop: n8n
 

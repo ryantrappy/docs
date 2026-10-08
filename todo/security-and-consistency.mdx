@@ -147,6 +147,12 @@ See [Plex library roots](/services/plex#library-roots).
 
 **Paperless fix applied — 2026-10-05:** Owner approval superseded the earlier automatic review blocker. Persisted API-only Authelia bypass with Paperless authentication, browser trusted-header SSO, loopback backend binding, AI's stack network/API URL and the Paperless Caddy handler order. Existing-token API access, two-factor browser SSO and session API access, logout, invalid/absent-token and forged-header rejection, AI connectivity, configuration readback and container health passed. Real phone login/sync and separate external-network checks remain pending. See [Paperless](/services/paperless#native-app-authentication-2026-10-05).
 
+**Home Assistant OIDC — 2026-10-08:** Enabled and validated the Authelia provider with a public client, exact HTTPS callback, S256 PKCE, RS256 signing and administrator-group/two-factor policy. Existing settings, API exceptions and MCP discovery were preserved; isolated provider exchange and password/TOTP passed. The owner will install/configure Home Assistant using the [OIDC settings and account-linking instructions](/infrastructure/caddy#home-assistant-oidc); local login remains available. Protected recovery artifacts are under `/home/trappserver/codex_docs/authelia-home-assistant-oidc-20261008/`.
+
+- [x] Authelia OIDC provider registered and authorization/token/userinfo verified on 2026-10-08.
+- [x] Existing HA browser gate, native API token rejection and MCP discovery/token requirement preserved on 2026-10-08.
+- [ ] Owner: install/configure HA OpenID Connect and verify the intended account with local login retained.
+- [ ] Verify actual HA OIDC browser/companion-app login and MCP connection after HA setup.
 - [x] Paperless server configuration persisted and API/browser/AI authentication verified on 2026-10-05.
 - [ ] Confirm actual Paperless mobile login and sync from the owner's device.
 
