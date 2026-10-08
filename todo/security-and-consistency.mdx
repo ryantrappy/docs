@@ -153,7 +153,8 @@ See [Plex library roots](/services/plex#library-roots).
 - [x] Existing HA browser gate, native API token rejection and MCP discovery/token requirement preserved on 2026-10-08.
 - [x] Owner installed/configured HA OpenID Connect; OIDC/local providers and canonical HTTPS/S256 initiation verified on 2026-10-08.
 - [x] Owner confirms successful OIDC login on 2026-10-08; local provider remains enabled.
-- [ ] Resolve the reported `trappserver`/`Trappserver` duplicate after identifying the original Owner account and exact local login username; preserve its credentials, tokens and person associations. Enabling automatic linking alone does not merge an already-linked OIDC identity.
+- [x] Owner identified the original `trappserver` Owner and supplied its account ID; prepared `/home/trappserver/codex_docs/authelia-home-assistant-oidc-20261008/LINK-EXISTING-ACCOUNT.md`.
+- [ ] Owner: reconcile the new non-owner duplicate using temporary linking and confirm fresh OIDC login reaches the original Owner ID; then disable linking. Preserve original credentials, tokens and person associations. Enabling linking alone does not merge an already-linked OIDC identity.
 - [ ] Verify actual HA OIDC browser/companion-app login and MCP connection after HA setup.
 - [x] Paperless server configuration persisted and API/browser/AI authentication verified on 2026-10-05.
 - [ ] Confirm actual Paperless mobile login and sync from the owner's device.
