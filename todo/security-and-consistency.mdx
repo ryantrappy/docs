@@ -10,13 +10,6 @@ This checklist began with a **read-only review on 2026-09-29**, supplemented by 
 
 Keep secret values, recovery codes, and private keys out of this page. Recheck each finding before changing a service.
 
-## Home Assistant MCP connection
-
-- [ ] Complete Codex sign-in to the existing ha-mcp server, verify tool discovery including automation creation, and reconnect the chat to load the tools. Component 2.2.1/server 8.6.0 currently uses legacy OAuth; `ha_auth` is supported and uses the owner's Home Assistant admin sign-in.
-- [ ] Restore only the required OAuth discovery access through Authelia if needed for the final MCP flow, retaining native MCP authentication. Earlier experimental discovery exceptions were rolled back.
-
-The Chrome TLS blocker is resolved by the [completed local DNS repair](/todo/completed#home-assistant-local-dns-repair--completed-2026-10-08-utc). Further DNS changes are not required for this connection.
-
 ## Gmail classifier follow-ups
 
 The [Gmail scaffold](/services/personal#gmail-email-classifier-scaffold) is saved, tested through manual MCP calls, and recorded on the [completed checklist](/todo/completed#gmail-email-classifier-scaffold-completed).
