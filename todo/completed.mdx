@@ -4,6 +4,14 @@ description: "Completed homelab tasks, preserving their verification evidence, r
 icon: "circle-check"
 ---
 
+## Skylight and Reminders ID sync — completed 2026-10-08 UTC
+
+- [x] Replaced name-based directional sync with queued HA requests and a serialized, persistent UID-linked worker on `trappserv.er`.
+- [x] Persisted eight active-item pairs and verified both lists show the same eight active items, including the previously missing item, with no pending writes or warnings.
+- [x] Passed thirteen simulated behavior checks and live automation/event, worker enablement and restart checks. Corrected the initial pending-addition duplication bug and confirmed cleanup before resuming.
+
+[Operations and rollback](/services/host#skylight-and-icloud-reminders-grocery-sync). Original automation, private ID state and cleanup snapshots are under `/home/trappserver/codex_docs/skylight-reminders-sync/`. Live completion/reactivation/rename of real grocery items, reboot and backup restore were not exercised. Historical completed duplicates remain unchanged; ambiguous new duplicates/conflicts require review. Credential renewal and private off-host backups remain on the [active checklist](/todo/security-and-consistency#skylight-and-reminders-sync-follow-ups). Documentation publication awaits the owner's PR merge.
+
 ## Home Assistant local DNS repair — completed 2026-10-08 UTC
 
 - [x] Changed only `ha.ryantr.app` from a UniFi A override to a Forward Domain policy targeting existing CoreDNS at `192.168.1.236:53`.
