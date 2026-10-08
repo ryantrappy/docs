@@ -175,6 +175,14 @@ See [Caddy setup](/infrastructure/caddy), [Authelia's Caddy integration](https:/
 
 - [ ] **Done when:** Each imported service has a verified clean recreation or recovery test; retain the independent Komodo bootstrap and rollback archive until recovery is proven.
 
+### Skylight and Reminders sync follow-ups
+
+- [ ] Include `/home/trappserver/codex_docs/skylight-reminders-sync/links.json`, source/config and the user service definition in an owner-only off-host backup. Keep the credential separately protected; the ID map contains private item names. Backup destination and restore proof were not established by this change.
+- [ ] Renew the dedicated Home Assistant credential before 2027-10-08. The worker reports authentication/connection failures and retains pending work.
+- [ ] Review historical completed duplicate items if cleanup is desired. The sync leaves them untouched and will report ambiguous new names rather than guess pairings. Concurrent rename conflicts require deliberate resolution; automatic deletion propagation is not enabled.
+
+See the [host sync reference](/services/host#skylight-and-icloud-reminders-grocery-sync) and the [completed implementation](/todo/completed#skylight-and-reminders-id-sync-completed-2026-10-08-utc).
+
 ## Track progress
 
 For each completed item, record:

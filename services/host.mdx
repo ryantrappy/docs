@@ -23,6 +23,16 @@ Trappserver runs applications and operational services directly on **Ubuntu 24.0
 
 [Plex](/services/plex) has a dedicated reference. [Backups, power, and storage](/infrastructure/host-reliability) covers CrashPlan, UPS management, SMART, and disks.
 
+## Skylight and iCloud Reminders grocery sync
+
+The user service `skylight-reminders-sync.service` on `trappserv.er` supports the Home Assistant automation **Sync Skylight and Trap House Grocery Lists**. Home Assistant emits `skylight_reminders_sync_requested` on list changes, item additions/completions, startup and a one-minute fallback. The worker serializes requests and also checks list contents every 30 seconds, catching changes that leave the incomplete-item count unchanged.
+
+The worker stores separate Skylight and iCloud UIDs with per-field baselines and durable write intents. Additions reconcile in both directions; completion, reactivation and renaming update the paired UID. Entity polling timestamps never determine ownership. Pending writes prevent stale responses from reversing changes, and unknown additions are not blindly repeated. Ambiguous unlinked names and concurrent edits require review. Historical completed duplicates remain untouched; absence does not automatically delete or recreate a paired item.
+
+Configuration, Python source, pinned `websockets==15.0.1` virtual environment, owner-only credential and `links.json` live under `/home/trappserver/codex_docs/skylight-reminders-sync/`. The unit is at `~/.config/systemd/user/skylight-reminders-sync.service`; user lingering was already enabled. The credential expires on 2027-10-08 and must be renewed before then. Preserve `links.json` in private backups: it contains item titles and the persistent ID pairings. This task did not establish off-host backup coverage.
+
+Check `sensor.skylight_reminders_sync` in Home Assistant for `ok`, `attention` or `paused`, linked-item count, pending writes and warnings. The service must stay running on the homelab host; provider polling still determines when external edits become visible. For rollback, stop/disable the worker first, then restore `automation.before.json` through the HA configuration API and enable the original automation. Restoring automation code does not undo list changes. Keep recovery data private; never run both implementations simultaneously.
+
 ## Dynamic DNS
 
 **Updated — 2026-10-02:** Cloudflare DDNS is the sole updater for public server A records. The Komodo `cloudflare-ddns` stack manages all thirteen current records; each matched the current WAN IPv4 address at verification.
