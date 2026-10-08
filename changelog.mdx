@@ -8,6 +8,13 @@ Use this log to see what changed and whether any follow-up affects you. Entries 
 
 ## 2026-10-08
 
+### Google, Skylight and Reminders grocery sync prepared
+
+- Staged a three-list extension to the existing UID-linked worker on `trappserv.er`. The Google Keep integration is loaded and polls every minute. Additions, check-offs/reactivation and renames reconcile across all sides; deletion propagation requires three fresh observations over at least two minutes, with persistent UID tombstones and write intents. Unavailable integrations pause writes; duplicate matches and concurrent conflicts require review.
+- **Checks:** 25 focused tests passed locally and in the existing Ubuntu virtual environment. Credentialed readback of all three lists succeeded. No candidate item writes, automation change or live worker restart was performed.
+- **Pending:** Confirm the selected Google list and whether to merge its pre-existing items or only future changes. Then deploy and verify add/check-off/delete using temporary items from each list. The existing Skylight/Reminders worker remains active and unchanged.
+- Candidate source, tests, private list snapshot and deployment/rollback notes are under `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/`. Rollback after deployment must stop the worker, restore paired source/config/state and restore automation through the HA API; restoring code does not undo propagated item edits. Host reboot, restore and voice-command tests have not been performed.
+
 ### Authelia OIDC provider for Home Assistant
 
 - **Account reconciliation prepared:** The owner identified the original `trappserver` Owner and supplied its ID. Prepared local ID-specific instructions to preserve that account, confirm the exact local username, temporarily enable linking, remove only the newly created non-owner duplicate and verify fresh OIDC login returns the original ID before disabling linking. Duplicate deletion invalidates its own sessions/tokens; important assignments must be checked first. No account deletion, transfer, HA write or restart was performed by Codex. Reconciliation remains an owner action; see local `LINK-EXISTING-ACCOUNT.md` in the task directory.

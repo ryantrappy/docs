@@ -6,6 +6,23 @@ icon: "house"
 
 This reference covers rankings, recipes, Homebridge, and the running TeslaMate support services, checked on **2026-09-28**.
 
+## Grocery list synchronization
+
+**Prepared — 2026-10-08 UTC:** The existing `skylight-reminders-sync.service` on `trappserv.er` links Skylight's grocery list and iCloud Reminders through Home Assistant. Its worker stores provider item IDs and per-field baselines privately under `/home/trappserver/codex_docs/skylight-reminders-sync/`; the existing HA automation requests reconciliation through a WebSocket event.
+
+A tested candidate adds Google Keep as a third list and introduces confirmed deletion propagation. Google voice shopping-list entries reach Home Assistant through the owner's Google Keep Sync integration, configured to poll every minute. The candidate is **not deployed** pending confirmation of the selected Google list and initial merge policy. Existing two-list behavior remains unchanged.
+
+The candidate tracks additions, rename and completion changes by linked UIDs. It confirms disappearance on three fresh reads over at least two minutes before deleting counterparts; cached reads and unavailable integrations cannot confirm removal. Durable write intents and tombstones prevent duplicate retries and stale-item resurrection. Ambiguous duplicates or conflicting simultaneous edits are held for review rather than overwritten. Unpaired completed history is not copied.
+
+- [x] Discover all three list entities and verify provider readback.
+- [x] Pass 25 focused worker tests locally and on Ubuntu.
+- [ ] Confirm Google list selection and existing-item merge policy.
+- [ ] Deploy the three-list worker and extend the existing HA automation.
+- [ ] Verify temporary-item additions, completion and deletion from each list, including restart persistence.
+- [ ] Confirm an actual Nest voice addition reaches both other lists.
+
+Candidate and private recovery notes: `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/`. Code rollback does not restore edited items; preserve fresh snapshots before recovery. No credentials or item contents belong in public docs. See [change history](/changelog).
+
 ## n8n on m1-mac
 
 **Updated — 2026-10-02:** Komodo manages the `n8n` stack on Server `m1-mac`, at [LAN HTTP access](http://192.168.1.163:5678). Its saved Compose and stack Environment are the deployment source; Komodo resolves named secret references and writes `.env`. Edit the stack in Komodo rather than its generated files.
