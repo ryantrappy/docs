@@ -6,6 +6,26 @@ icon: "house"
 
 This reference covers rankings, recipes, Homebridge, and the running TeslaMate support services, checked on **2026-09-28**.
 
+## Grocery list synchronization
+
+**Deployed — 2026-10-08 UTC:** `skylight-reminders-sync.service` on `trappserv.er` now links Skylight, iCloud Reminders and the owner's Google Keep shopping list through Home Assistant. The owner cleared the Google list before bootstrap; fresh provider readback confirmed that the eight active groceries from the other lists reached Google. Unpaired completed history remains untouched.
+
+The existing HA automation requests reconciliation on changes to any of the three lists, every minute, and at HA startup. Google Keep Sync polls every minute. Reminders refreshes can take several minutes; confirmation makes removals slower still. Native WebSocket item snapshots avoid read requests queueing behind cloud writes. The worker stores provider item IDs and per-field baselines privately under `/home/trappserver/codex_docs/skylight-reminders-sync/`.
+
+Additions, rename and completion changes reconcile by linked UIDs. Disappearance is checked over three refresh cycles spanning at least two minutes before deleting counterparts. Unavailable integrations pause writes; intermediate reads without a refresh request do not advance removal confirmation. Durable write intents and tombstones prevent duplicate retries and stale-item resurrection. Ambiguous duplicates, unconfirmed additions, renames and reactivation conflicts are held for review. A removal takes precedence over a concurrent check-off.
+
+- [x] Discover all three lists and pass 27 focused worker tests locally and on Ubuntu.
+- [x] Confirm empty Google list, deploy the worker and extend the existing HA automation.
+- [x] Verify eight active grocery items are present on all three lists.
+- [x] Verify live temporary-item additions, check-offs and reactivation from each source without duplicates.
+- [x] Verify removals from each source; all disposable items are absent and all original item IDs/values are preserved. One new ordinary item added during the test also synchronized, leaving nine active items per list and zero pending work.
+- [x] Restart the worker and verify stored links/item values, status `ok` and zero pending work.
+- [ ] Confirm an actual Nest voice addition. The new ordinary item's voice origin is awaiting owner confirmation.
+
+Live testing found a deletion/check-off conflict: Google retained a completed copy after Reminders removed it. Removal now takes precedence over completion; renames and reactivation still hold a deletion for review. Two regression cases cover those outcomes. Initial iCloud timeouts and delayed readback were also observed; uncertain additions are not repeated blindly. The final private verification permits legitimate new items while confirming every original UID/value is unchanged.
+
+Private recovery files are under `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/before/`. Rollback must restore the paired source, configuration and state together with the previous HA automation; old code alone cannot safely read migrated state. Restoring code does not restore edited items. No credentials or item contents belong in public docs. See [change history](/changelog).
+
 ## n8n on m1-mac
 
 **Updated — 2026-10-02:** Komodo manages the `n8n` stack on Server `m1-mac`, at [LAN HTTP access](http://192.168.1.163:5678). Its saved Compose and stack Environment are the deployment source; Komodo resolves named secret references and writes `.env`. Edit the stack in Komodo rather than its generated files.

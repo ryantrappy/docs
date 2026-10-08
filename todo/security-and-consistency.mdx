@@ -6,6 +6,13 @@ icon: "list-check"
 
 This checklist began with a **read-only review on 2026-09-29**, supplemented by infrastructure references checked on 2026-09-28. The initial review made no changes. Completed work and its verification notes are in [Completed items](/todo/completed). This page tracks remaining work. Work through one item at a time.
 
+## Grocery sync — remaining checks
+
+- [x] Deploy the Google/Skylight/Reminders worker and HA automation; pass 27 regression cases and live add/check-off/reactivate/remove checks from each source.
+- [x] Seed the empty Google list, clean all disposable items, preserve the original items and verify worker restart with zero pending work.
+- [ ] Confirm the ordinary item that synchronized during testing was added using Nest/Google voice, or perform a separate voice test.
+- [ ] Establish private off-host coverage for worker configuration, link state and service files; verify an actual restore and host reboot. See [grocery sync](/services/personal#grocery-list-synchronization) for recovery paths and provider delays.
+
 **Scope:** Docker runtime settings, selected readable deployment files, credential file permissions, host listeners, database versions, and existing homelab documentation. Router rules, internet reachability, effective application passwords, backup restores, and a full vulnerability scan were not tested. A port bound to every interface is a confirmed configuration finding; it does not by itself prove internet exposure.
 
 Keep secret values, recovery codes, and private keys out of this page. Recheck each finding before changing a service.
