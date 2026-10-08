@@ -4,6 +4,16 @@ description: "Completed homelab tasks, preserving their verification evidence, r
 icon: "circle-check"
 ---
 
+## Three-way grocery list sync — completed 2026-10-08 UTC
+
+- [x] Extend the worker and HA event automation to include Google Keep with Skylight and iCloud Reminders.
+- [x] Seed the owner's empty Google list with eight active groceries. A new ordinary item also reached all three lists during testing.
+- [x] Reproduce and fix removal versus check-off conflict handling; pass 27 worker tests locally and on Ubuntu.
+- [x] Verify live additions, completion, reactivation and removals from each source. All disposable items are absent; every original UID/value is preserved. Nine active items remain on each list.
+- [x] Verify restart persistence, status `ok` and zero pending work. Native WebSocket snapshots bypass cloud service read queues.
+
+Reminders can take several minutes to refresh; removal confirmation adds delay. Actual Nest voice origin, off-host backup, restore and host reboot remain on the [active checklist](/todo/security-and-consistency#grocery-sync--remaining-checks). Private final evidence is `/home/trappserver/codex_docs/skylight-reminders-sync/google-sync-20261008/verification.final.private.json`; recovery files are in its `before/` directory. See [operation and rollback](/services/personal#grocery-list-synchronization).
+
 ## Home Assistant local DNS repair — completed 2026-10-08 UTC
 
 - [x] Changed only `ha.ryantr.app` from a UniFi A override to a Forward Domain policy targeting existing CoreDNS at `192.168.1.236:53`.

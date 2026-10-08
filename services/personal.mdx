@@ -19,6 +19,7 @@ Additions, rename and completion changes reconcile by linked UIDs. Disappearance
 - [x] Verify eight active grocery items are present on all three lists.
 - [x] Verify live temporary-item additions, check-offs and reactivation from each source without duplicates.
 - [x] Verify removals from each source; all disposable items are absent and all original item IDs/values are preserved. One new ordinary item added during the test also synchronized, leaving nine active items per list and zero pending work.
+- [x] Restart the worker and verify stored links/item values, status `ok` and zero pending work.
 - [ ] Confirm an actual Nest voice addition. The new ordinary item's voice origin is awaiting owner confirmation.
 
 Live testing found a deletion/check-off conflict: Google retained a completed copy after Reminders removed it. Removal now takes precedence over completion; renames and reactivation still hold a deletion for review. Two regression cases cover those outcomes. Initial iCloud timeouts and delayed readback were also observed; uncertain additions are not repeated blindly. The final private verification permits legitimate new items while confirming every original UID/value is unchanged.
